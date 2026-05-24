@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * ShopGuard Setup Verification Script
+ * Vrovex Setup Verification Script
  * Verifica que todo esté configurado correctamente
  */
 
@@ -52,30 +52,6 @@ async function checkNodeVersion() {
   }
 }
 
-async function checkMongoDB() {
-  try {
-    const { stdout } = await execAsync('mongod --version');
-    log(`${checkmark()} MongoDB instalado`, 'green');
-    return true;
-  } catch (error) {
-    log(`${crossmark()} MongoDB no encontrado`, 'red');
-    log('  Instalar desde: https://www.mongodb.com/try/download/community', 'yellow');
-    return false;
-  }
-}
-
-async function checkMongoDBRunning() {
-  try {
-    await execAsync('mongosh --eval "db.version()" --quiet');
-    log(`${checkmark()} MongoDB está corriendo`, 'green');
-    return true;
-  } catch (error) {
-    log(`${crossmark()} MongoDB no está corriendo`, 'red');
-    log('  Iniciar con: net start MongoDB (Windows) o sudo systemctl start mongod (Linux)', 'yellow');
-    return false;
-  }
-}
-
 function checkFile(filePath, description) {
   if (fs.existsSync(filePath)) {
     log(`${checkmark()} ${description}`, 'green');
@@ -97,7 +73,8 @@ function checkEnvFile() {
   
   const envContent = fs.readFileSync(envPath, 'utf8');
   const requiredVars = [
-    'MONGODB_URI',
+    'SUPABASE_URL',
+    'SUPABASE_SERVICE_ROLE_KEY',
     'JWT_SECRET',
     'TIKTOK_APP_KEY',
     'TIKTOK_APP_SECRET'
@@ -148,7 +125,7 @@ async function checkPort(port, service) {
 
 async function main() {
   log('\n╔════════════════════════════════════════╗', 'cyan');
-  log('║   ShopGuard - Verificación de Setup   ║', 'cyan');
+  log('║   Vrovex - Verificación de Setup   ║', 'cyan');
   log('╚════════════════════════════════════════╝\n', 'cyan');
   
   let allChecks = true;
@@ -157,17 +134,7 @@ async function main() {
   log('📦 Verificando Node.js...', 'blue');
   allChecks = await checkNodeVersion() && allChecks;
   
-  // 2. MongoDB
-  log('\n🗄️  Verificando MongoDB...', 'blue');
-  const mongoInstalled = await checkMongoDB();
-  allChecks = mongoInstalled && allChecks;
-  
-  if (mongoInstalled) {
-    const mongoRunning = await checkMongoDBRunning();
-    allChecks = mongoRunning && allChecks;
-  }
-  
-  // 3. Archivos del proyecto
+  // 2. Archivos del proyecto
   log('\n📁 Verificando estructura del proyecto...', 'blue');
   allChecks = checkFile('server/server.js', 'Backend server.js') && allChecks;
   allChecks = checkFile('server/package.json', 'Backend package.json') && allChecks;
@@ -207,3 +174,4 @@ async function main() {
 }
 
 main().catch(console.error);
+

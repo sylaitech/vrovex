@@ -1,10 +1,15 @@
-import User from '../models/User.js';
+import { supabase } from '../server.js';
 import { isStaffRole } from '../utils/creator.js';
 
 export async function requireAdmin(req, res, next) {
   try {
-    const user = await User.findById(req.userId);
-    if (!user) {
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('id, role')
+      .eq('id', req.userId)
+      .single();
+
+    if (error || !user) {
       return res.status(401).json({ error: 'Authentication required' });
     }
     if (!isStaffRole(user.role)) {

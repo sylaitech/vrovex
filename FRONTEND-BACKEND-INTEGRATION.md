@@ -57,8 +57,7 @@ npm run dev
 
 Deberías ver:
 ```
-✅ Connected to MongoDB
-🚀 ShopGuard Backend running on port 5000
+🚀 Vrovex Backend running on port 5000
 🔍 Metrics monitoring started
 ```
 
@@ -311,10 +310,10 @@ curl http://localhost:5000/api/auth/me \
                      │
                      ▼
 ┌─────────────────────────────────────────────────────────┐
-│                  MONGODB                                │
-│              (localhost:27017)                          │
+│                  SUPABASE                                │
+│          (managed/PostgreSQL)                            │
 │                                                         │
-│  Collections:                                           │
+│  Tables:                                                │
 │  - users                                                │
 │  - shops                                                │
 │  - alerts                                               │
@@ -427,3 +426,4 @@ Solo necesitas:
 ---
 
 **¡El sistema está listo para proteger cuentas de TikTok Shop 24/7!**
+

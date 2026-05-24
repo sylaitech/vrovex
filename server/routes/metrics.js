@@ -1,110 +1,128 @@
 import express from 'express';
-import Shop from '../models/Shop.js';
-import MetricsHistory from '../models/MetricsHistory.js';
 import { auth } from '../middleware/auth.js';
 import { requireActivePlan } from '../middleware/requireActivePlan.js';
+import { supabase } from '../server.js';
 
 const router = express.Router();
 
 router.use(auth, requireActivePlan);
 
-// Get current metrics for a shop
+async function getShopForUser(shopId, userId) {
+  const { data, error } = await supabase
+    .from('shops')
+    .select('*')
+    .eq('id', shopId)
+    .eq('user_id', userId)
+    .single();
+
+  if (error) return null;
+  return data;
+}
+
 router.get('/:shopId/current', async (req, res) => {
   try {
-    const shop = await Shop.findOne({
-      _id: req.params.shopId,
-      userId: req.userId
-    });
-    
+    const shop = await getShopForUser(req.params.shopId, req.userId);
     if (!shop) {
       return res.status(404).json({ error: 'Shop not found' });
     }
-    
+
     res.json({
-      shopId: shop._id,
-      shopName: shop.shopName,
-      metrics: shop.metrics,
+      shopId: shop.id,
+      shopName: shop.shop_name,
+      metrics: {
+        accountHealth: shop.metrics_account_health,
+        lateDispatchRate: shop.metrics_late_dispatch_rate,
+        onTimeDeliveryRate: shop.metrics_on_time_delivery_rate,
+        validTrackingRate: shop.metrics_valid_tracking_rate,
+        shieldScore: shop.metrics_shield_score,
+      },
       status: shop.status,
-      lastSync: shop.lastSync
+      lastSync: shop.last_sync,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Get metrics history
 router.get('/:shopId/history', async (req, res) => {
   try {
-    const shop = await Shop.findOne({
-      _id: req.params.shopId,
-      userId: req.userId
-    });
-    
+    const shop = await getShopForUser(req.params.shopId, req.userId);
     if (!shop) {
       return res.status(404).json({ error: 'Shop not found' });
     }
-    
+
     const { period = '7d' } = req.query;
-    
-    // Calculate date range
     const now = new Date();
     let startDate;
-    
+
     switch (period) {
       case '24h':
-        startDate = new Date(now - 24 * 60 * 60 * 1000);
+        startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
         break;
       case '7d':
-        startDate = new Date(now - 7 * 24 * 60 * 60 * 1000);
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         break;
       case '30d':
-        startDate = new Date(now - 30 * 24 * 60 * 60 * 1000);
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
         break;
       case '90d':
-        startDate = new Date(now - 90 * 24 * 60 * 60 * 1000);
+        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
         break;
       default:
-        startDate = new Date(now - 7 * 24 * 60 * 60 * 1000);
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     }
-    
-    const history = await MetricsHistory.find({
-      shopId: shop._id,
-      timestamp: { $gte: startDate }
-    }).sort({ timestamp: 1 });
-    
-    res.json(history);
+
+    const { data: history, error } = await supabase
+      .from('metrics_history')
+      .select('*')
+      .eq('shop_id', shop.id)
+      .gte('recorded_at', startDate.toISOString())
+      .order('recorded_at', { ascending: true });
+
+    if (error) throw error;
+
+    res.json(history || []);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Get metrics summary for all shops
 router.get('/summary', async (req, res) => {
   try {
-    const shops = await Shop.find({ userId: req.userId });
-    
-    const summary = shops.map(shop => ({
-      shopId: shop._id,
-      shopName: shop.shopName,
+    const { data: shops, error } = await supabase
+      .from('shops')
+      .select('*')
+      .eq('user_id', req.userId);
+
+    if (error) throw error;
+
+    const summary = (shops || []).map((shop) => ({
+      shopId: shop.id,
+      shopName: shop.shop_name,
       status: shop.status,
-      metrics: shop.metrics,
-      lastSync: shop.lastSync
+      metrics: {
+        accountHealth: shop.metrics_account_health,
+        lateDispatchRate: shop.metrics_late_dispatch_rate,
+        onTimeDeliveryRate: shop.metrics_on_time_delivery_rate,
+        validTrackingRate: shop.metrics_valid_tracking_rate,
+        shieldScore: shop.metrics_shield_score,
+      },
+      lastSync: shop.last_sync,
     }));
-    
-    // Calculate overall stats
-    const totalShops = shops.length;
-    const criticalShops = shops.filter(s => s.status === 'critical').length;
-    const warningShops = shops.filter(s => s.status === 'warning').length;
-    const healthyShops = shops.filter(s => s.status === 'healthy').length;
-    
+
+    const totalShops = summary.length;
+    const criticalShops = summary.filter((s) => s.status === 'critical').length;
+    const warningShops = summary.filter((s) => s.status === 'warning').length;
+    const healthyShops = summary.filter((s) => s.status === 'healthy').length;
+
     res.json({
       summary,
       stats: {
         totalShops,
         criticalShops,
         warningShops,
-        healthyShops
-      }
+        healthyShops,
+      },
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

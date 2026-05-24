@@ -27,7 +27,7 @@ import {
   ShieldX
 } from 'lucide-react';
 
-export default function ShopGuardLanding() {
+export default function VrovexLanding() {
   const [view, setView] = useState('landing'); // 'landing' | 'dashboard'
   const [openFaq, setOpenFaq] = useState(0);
   
@@ -247,8 +247,8 @@ export default function ShopGuardLanding() {
   };
 
   const faqs = [
-    { q: "¿Cómo se conecta ShopGuard con mi cuenta de TikTok Shop?", a: "Se conecta mediante la API oficial de TikTok Shop Partner en un solo click. No guardamos tus credenciales de inicio de sesión ni modificamos tus productos, solo leemos tus métricas de salud en tiempo real." },
-    { q: "¿ShopGuard puede prevenir un ban automático de TikTok?", a: "Sí. Nuestra IA detecta anomalías en tu Late Dispatch Rate y en las quejas de clientes 48 horas antes de que alcancen el umbral de penalización de TikTok, dándote una ventana crítica para corregirlo." },
+    { q: "¿Cómo se conecta Vrovex con mi cuenta de TikTok Shop?", a: "Se conecta mediante la API oficial de TikTok Shop Partner en un solo click. No guardamos tus credenciales de inicio de sesión ni modificamos tus productos, solo leemos tus métricas de salud en tiempo real." },
+    { q: "¿Vrovex puede prevenir un ban automático de TikTok?", a: "Sí. Nuestra IA detecta anomalías en tu Late Dispatch Rate y en las quejas de clientes 48 horas antes de que alcancen el umbral de penalización de TikTok, dándote una ventana crítica para corregirlo." },
     { q: "¿Cómo funciona el generador automático de appeals?", a: "Si tu cuenta recibe una infracción, nuestro sistema analiza el código de error exacto de TikTok y redacta una apelación optimizada legalmente con las plantillas de mayor tasa de éxito del mercado." },
     { q: "¿Puedo añadir múltiples tiendas en el plan Pro?", a: "¡Sí! El plan Pro te permite enlazar hasta 3 tiendas de TikTok Shop de forma simultánea con un único panel centralizado y alertas independientes." }
   ];
@@ -275,7 +275,7 @@ export default function ShopGuardLanding() {
                 <div className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center text-frost-white border border-white/20">
                   <ShieldCheck className="w-5 h-5 animate-float" />
                 </div>
-                <span className="font-medium text-frost-white font-roobert tracking-normal">ShopGuard</span>
+                <span className="font-medium text-frost-white font-roobert tracking-normal">Vrovex</span>
               </div>
               
               <button 
@@ -302,7 +302,7 @@ export default function ShopGuardLanding() {
             </h1>
             
             <p className="mt-6 text-whisper-gray max-w-xl mx-auto text-body leading-relaxed font-normal animate-slide-up-fade delay-100 opacity-0">
-              ShopGuard monitorea tu cuenta 24/7, predice suspensiones antes de que pasen y genera tu appeal automáticamente si algo sale mal.
+              Vrovex monitorea tu cuenta 24/7, predice suspensiones antes de que pasen y genera tu appeal automáticamente si algo sale mal.
             </p>
             
             <div className="mt-10 flex flex-wrap gap-4 justify-center animate-slide-up-fade delay-200 opacity-0">
@@ -367,7 +367,7 @@ export default function ShopGuardLanding() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
-                { id: '01', title: 'Conecta tu shop', desc: 'Autorizás ShopGuard con tu cuenta de TikTok Shop en un click. Setup automatizado en 5 minutos sin tocar código.' },
+                { id: '01', title: 'Conecta tu shop', desc: 'Autorizás Vrovex con tu cuenta de TikTok Shop en un click. Setup automatizado en 5 minutos sin tocar código.' },
                 { id: '02', title: 'Monitor en tiempo real', desc: 'Analizamos de manera continua tu Account Health Score, late dispatch rate, tracking y compliance de catálogos.' },
                 { id: '03', title: 'Alerta y actúa', desc: 'Recibís notificaciones push inmediatas antes del riesgo. Si te banean, generamos y enviamos el appeal automatizado.' }
               ].map((step, idx) => (
@@ -434,7 +434,7 @@ export default function ShopGuardLanding() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
               <div className="bg-deep-shadow border border-white/10 p-9 md:p-12 rounded-cards relative hover:border-white/20 transition-colors">
                 <div className="flex gap-1 text-frost-white mb-3"><Star className="w-3.5 h-3.5 fill-current" /><Star className="w-3.5 h-3.5 fill-current" /><Star className="w-3.5 h-3.5 fill-current" /><Star className="w-3.5 h-3.5 fill-current" /><Star className="w-3.5 h-3.5 fill-current" /></div>
-                <p className="text-body text-whisper-gray leading-relaxed">"TikTok nos metió un ban por error en pleno Black Friday. El appeal automático de ShopGuard se generó y aprobó en menos de 6 horas. Nos salvó el año entero de facturación."</p>
+                <p className="text-body text-whisper-gray leading-relaxed">"TikTok nos metió un ban por error en pleno Black Friday. El appeal automático de Vrovex se generó y aprobó en menos de 6 horas. Nos salvó el año entero de facturación."</p>
                 <div className="mt-4 flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-caption font-medium text-frost-white">AM</div>
                   <div>
@@ -528,13 +528,13 @@ export default function ShopGuardLanding() {
               <div className="absolute top-0 right-0 w-64 h-64 bg-hero-gradient blur-[100px] opacity-10 pointer-events-none" />
               <div className="space-y-3 text-center md:text-left">
                 <div className="inline-flex items-center gap-1.5 text-midnight-canvas text-[10px] font-medium uppercase tracking-widest bg-frost-white px-3 py-1.5 rounded-buttons"><Zap className="w-3 h-3 text-midnight-canvas" /> Suite de Crecimiento</div>
-                <h3 className="text-subheading font-medium tracking-tight animate-reveal-3d text-frost-white">Bundle VyshAI + ShopGuard</h3>
+                <h3 className="text-subheading font-medium tracking-tight animate-reveal-3d text-frost-white">Bundle VyshAI + Vrovex</h3>
                 <p className="text-whisper-gray text-body max-w-md">
-                  VyshAI localiza y filtra los productos con mayor demanda y potencial. ShopGuard blinda tu infraestructura operativa ante infracciones mientras escalás la pauta publicitaria.
+                  VyshAI localiza y filtra los productos con mayor demanda y potencial. Vrovex blinda tu infraestructura operativa ante infracciones mientras escalás la pauta publicitaria.
                 </p>
               </div>
               <div className="text-center flex-shrink-0 bg-black border border-white/15 p-6 rounded-cards min-w-[240px]">
-                <div className="text-[10px] text-whisper-gray line-through">VyshAI $99 + ShopGuard $97 = $196</div>
+                <div className="text-[10px] text-whisper-gray line-through">VyshAI $99 + Vrovex $97 = $196</div>
                 <div className="text-subheading font-medium text-frost-white mt-1 tracking-tight">$147<span className="text-caption font-normal text-whisper-gray">/mes</span></div>
                 <div className="text-[10px] text-frost-white font-medium mt-1.5 bg-white/10 border border-white/15 py-1 px-2 rounded-buttons inline-block">Ahorrás $49 al mes · Cancelá cuando quieras</div>
                 <button 
@@ -582,7 +582,7 @@ export default function ShopGuardLanding() {
             <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="flex items-center gap-2.5">
                 <div className="w-6 h-6 bg-white/10 border border-white/15 rounded-full flex items-center justify-center text-frost-white"><ShieldCheck className="w-3.5 h-3.5" /></div>
-                <span className="font-medium text-frost-white">ShopGuard © 2026</span>
+                <span className="font-medium text-frost-white">Vrovex © 2026</span>
               </div>
               <div className="flex gap-6 text-whisper-gray">
                 <a href="#" className="hover:text-frost-white transition-colors">Términos de servicio</a>
@@ -613,7 +613,7 @@ export default function ShopGuardLanding() {
                 <div className="w-7 h-7 bg-white/10 rounded-full flex items-center justify-center text-frost-white">
                   <ShieldCheck className="w-4 h-4" />
                 </div>
-                <span className="font-medium text-sm text-frost-white hidden sm:inline">ShopGuard Command Center</span>
+                <span className="font-medium text-sm text-frost-white hidden sm:inline">Vrovex Command Center</span>
               </div>
             </div>
 
@@ -819,7 +819,7 @@ export default function ShopGuardLanding() {
 
                   {/* Shield Global Score Indicator */}
                   <div className="bg-deep-shadow border border-white/10 rounded-cards p-6 flex flex-col justify-between">
-                    <span className="text-caption font-medium text-whisper-gray tracking-wider uppercase">Indicador de Fuerza ShopGuard</span>
+                    <span className="text-caption font-medium text-whisper-gray tracking-wider uppercase">Indicador de Fuerza Vrovex</span>
                     
                     <div className="flex flex-col items-center py-6">
                       <div className="relative w-36 h-36">
@@ -1055,3 +1055,4 @@ export default function ShopGuardLanding() {
     </div>
   );
 }
+

@@ -1,6 +1,8 @@
-# ShopGuard Backend API
+# Vrovex Backend API
 
-Backend completo para ShopGuard - Sistema de protección de cuentas de TikTok Shop.
+Backend completo para Vrovex - Sistema de protección de cuentas de TikTok Shop.
+
+> Modelo SaaS: se activa al pagar, 30 días de acceso y la membresía se cierra al vencerse.
 
 ## 🚀 Características
 
@@ -12,13 +14,13 @@ Backend completo para ShopGuard - Sistema de protección de cuentas de TikTok Sh
 - ✅ Scanner de compliance para productos
 - ✅ Historial de métricas con predicciones
 - ✅ Notificaciones por email
-- ✅ Base de datos MongoDB
+- ✅ Base de datos Supabase
 - ✅ Logging con Winston
 
 ## 📋 Requisitos Previos
 
 - Node.js 18+ 
-- MongoDB 6+
+- Proyecto Supabase configurado
 - Cuenta de TikTok Shop Partner (para obtener API keys)
 
 ## 🔧 Instalación
@@ -40,8 +42,9 @@ cp .env.example .env
 TIKTOK_APP_KEY=tu-app-key-aqui
 TIKTOK_APP_SECRET=tu-app-secret-aqui
 
-# MongoDB
-MONGODB_URI=mongodb://localhost:27017/shopguard
+# Supabase
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
 # JWT
 JWT_SECRET=cambia-esto-por-un-secret-seguro
@@ -51,16 +54,7 @@ SMTP_USER=tu-email@gmail.com
 SMTP_PASS=tu-app-password
 ```
 
-4. Iniciar MongoDB:
-```bash
-# Windows
-net start MongoDB
-
-# Linux/Mac
-sudo systemctl start mongod
-```
-
-5. Iniciar servidor:
+4. Iniciar servidor:
 ```bash
 # Desarrollo
 npm run dev
@@ -207,7 +201,7 @@ FRONTEND_URL=https://tu-dominio.com
 ```
 
 ### Recomendaciones:
-- Usar MongoDB Atlas para base de datos
+- Usar Supabase como base de datos y autenticación
 - Configurar HTTPS con certificado SSL
 - Usar PM2 para gestión de procesos
 - Configurar firewall y rate limiting
@@ -228,4 +222,5 @@ Para problemas con la API de TikTok:
 
 ## 📄 Licencia
 
-Propietario - ShopGuard © 2026
+Propietario - Vrovex © 2026
+

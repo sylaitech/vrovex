@@ -9,7 +9,17 @@ const logger = winston.createLogger({
   ),
   transports: [
     new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'logs/combined.log' })
+    new winston.transports.File({ filename: 'logs/combined.log' }),
+    // Dedicated file for AI cost tracking — filter with: grep '"ai_audit"' logs/ai-costs.log
+    new winston.transports.File({
+      filename: 'logs/ai-costs.log',
+      level: 'info',
+      format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.json(),
+        winston.format((info) => (info.auditHash ? info : false))()
+      )
+    })
   ]
 });
 

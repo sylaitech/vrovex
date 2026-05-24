@@ -1,5 +1,5 @@
 /**
- * Calculate ShopGuard Shield Score (0-100)
+ * Calculate Vrovex Shield Score (0-100)
  */
 export function calculateShieldScore(metrics) {
   const weights = {
@@ -95,3 +95,4 @@ export function analyzeMetricsTrend(history) {
   
   return { trend, change };
 }
+

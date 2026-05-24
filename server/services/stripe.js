@@ -1,6 +1,6 @@
 import Stripe from 'stripe';
-import User from '../models/User.js';
 import logger from '../utils/logger.js';
+import { supabase } from '../server.js';
 
 const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY)
@@ -12,13 +12,31 @@ export function stripeEnabled() {
   return Boolean(stripe && PRICE_ID);
 }
 
+async function getUser(userId) {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
 export async function createCheckoutSession(userId, email) {
   if (!stripeEnabled()) {
     throw new Error('Stripe is not configured');
   }
 
-  const user = await User.findById(userId);
-  let customerId = user?.stripeCustomerId;
+  const user = await getUser(userId);
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  let customerId = user.stripe_customer_id;
 
   if (!customerId) {
     const customer = await stripe.customers.create({
@@ -26,17 +44,23 @@ export async function createCheckoutSession(userId, email) {
       metadata: { userId: String(userId) },
     });
     customerId = customer.id;
-    await User.findByIdAndUpdate(userId, { stripeCustomerId: customerId });
+    await supabase
+      .from('users')
+      .update({ stripe_customer_id: customerId })
+      .eq('id', userId);
   }
 
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
     customer: customerId,
+    customer_email: email,
+    payment_method_types: ['card'],
     line_items: [{ price: PRICE_ID, quantity: 1 }],
     success_url: `${process.env.FRONTEND_URL}/?billing=success`,
     cancel_url: `${process.env.FRONTEND_URL}/?billing=canceled`,
     metadata: { userId: String(userId) },
     subscription_data: {
+      trial_period_days: 0,
       metadata: { userId: String(userId) },
     },
   });
@@ -45,20 +69,33 @@ export async function createCheckoutSession(userId, email) {
 }
 
 export async function activateSubscription(userId, periodEnd, subscriptionId, customerId) {
-  await User.findByIdAndUpdate(userId, {
-    planStatus: 'active',
-    currentPeriodEnd: periodEnd,
-    stripeSubscriptionId: subscriptionId,
-    ...(customerId ? { stripeCustomerId: customerId } : {}),
-  });
+  const updates = {
+    plan_status: 'active',
+    current_period_end: periodEnd ? periodEnd.toISOString() : null,
+    stripe_subscription_id: subscriptionId,
+  };
+
+  if (customerId) {
+    updates.stripe_customer_id = customerId;
+  }
+
+  await supabase
+    .from('users')
+    .update(updates)
+    .eq('id', userId);
+
   logger.info(`Subscription activated for user ${userId}`);
 }
 
 export async function deactivateSubscription(userId) {
-  await User.findByIdAndUpdate(userId, {
-    planStatus: 'inactive',
-    stripeSubscriptionId: null,
-  });
+  await supabase
+    .from('users')
+    .update({
+      plan_status: 'inactive',
+      stripe_subscription_id: null,
+    })
+    .eq('id', userId);
+
   logger.info(`Subscription deactivated for user ${userId}`);
 }
 
@@ -85,6 +122,17 @@ export async function handleStripeWebhook(rawBody, signature) {
       } else {
         await activateSubscription(userId, periodEnd, null, session.customer);
       }
+
+      const { data: user } = await supabase
+        .from('users')
+        .select('email, name, current_period_end')
+        .eq('id', userId)
+        .single();
+
+      if (user) {
+        const { sendSubscriptionActivatedEmail } = await import('./notifications.js');
+        await sendSubscriptionActivatedEmail(user);
+      }
       break;
     }
     case 'customer.subscription.updated': {
@@ -99,9 +147,10 @@ export async function handleStripeWebhook(rawBody, signature) {
           sub.customer
         );
       } else if (['canceled', 'unpaid', 'past_due'].includes(sub.status)) {
-        await User.findByIdAndUpdate(userId, {
-          planStatus: sub.status === 'canceled' ? 'canceled' : 'inactive',
-        });
+        await supabase
+          .from('users')
+          .update({ plan_status: sub.status === 'canceled' ? 'canceled' : 'inactive' })
+          .eq('id', userId);
       }
       break;
     }
@@ -118,7 +167,10 @@ export async function handleStripeWebhook(rawBody, signature) {
         const sub = await stripe.subscriptions.retrieve(subId);
         const userId = sub.metadata?.userId;
         if (userId) {
-          await User.findByIdAndUpdate(userId, { planStatus: 'inactive' });
+          await supabase
+            .from('users')
+            .update({ plan_status: 'inactive' })
+            .eq('id', userId);
         }
       }
       break;

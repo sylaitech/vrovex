@@ -37,11 +37,11 @@ Eventos manejados:
 3. Variables: `TIKTOK_APP_KEY`, `TIKTOK_APP_SECRET`, `TIKTOK_REDIRECT_URI`
 4. El botón **Conectar TikTok Shop** solo funciona con plan activo.
 
-Flujo: usuario paga → dashboard → OAuth → tokens en MongoDB (`Shop`) + `tiktokShopConnected: true`.
+Flujo: usuario paga → dashboard → OAuth → tokens en Supabase (`shops`) + `tiktok_shop_connected: true`.
 
 ## 4. Backend Express (paralelo a Supabase)
 
-MongoDB `User` incluye los mismos campos que `profiles` para el API actual.
+Supabase `users` incluye los mismos campos que `profiles` para el API actual.
 
 Rutas protegidas con `requireActivePlan`:
 
@@ -68,7 +68,7 @@ CREATOR_EMAILS=sylai.tech@gmail.com
 2. O promueve usuario existente:
 
 ```bash
-cd server && node scripts/promote-creator.js tu-email@gmail.com
+Utilizar el panel de admin para promover usuarios o actualizar roles directamente en Supabase.
 ```
 
 3. Inicia sesión → botón **Panel creador** en el navbar.

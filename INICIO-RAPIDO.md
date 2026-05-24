@@ -1,4 +1,4 @@
-# ⚡ ShopGuard - Inicio Rápido (5 minutos)
+# ⚡ Vrovex - Inicio Rápido (5 minutos)
 
 ## 🚀 Instalación Express
 
@@ -25,7 +25,8 @@ cp server/.env.example server/.env
 
 **Mínimo requerido:**
 ```env
-MONGODB_URI=mongodb://localhost:27017/shopguard
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 JWT_SECRET=cambia-esto-por-algo-seguro-123456
 TIKTOK_APP_KEY=tu-app-key-aqui
 TIKTOK_APP_SECRET=tu-app-secret-aqui
@@ -33,21 +34,7 @@ TIKTOK_APP_SECRET=tu-app-secret-aqui
 
 ---
 
-### 3. Iniciar MongoDB (30 segundos)
-
-**Windows:**
-```bash
-net start MongoDB
-```
-
-**Linux/Mac:**
-```bash
-sudo systemctl start mongod
-```
-
----
-
-### 4. Iniciar Sistema (1 minuto)
+### 3. Iniciar Sistema (30 segundos)
 
 **Terminal 1 - Backend:**
 ```bash
@@ -57,8 +44,7 @@ npm run dev
 
 Espera ver:
 ```
-✅ Connected to MongoDB
-🚀 ShopGuard Backend running on port 5000
+🚀 Vrovex Backend running on port 5000
 🔍 Metrics monitoring started
 ```
 
@@ -144,13 +130,10 @@ Dashboard → "Conectar Tienda" → Autorizar en TikTok
 
 ## 🐛 Problemas Comunes
 
-### MongoDB no inicia
+### Supabase local no inicia
 ```bash
-# Windows
-net start MongoDB
-
-# Linux/Mac
-sudo systemctl start mongod
+# Iniciar Supabase local si usas CLI
+supabase start
 ```
 
 ### Puerto ocupado
@@ -179,7 +162,7 @@ cd server && npm install
 
 ## 🎉 ¡Listo!
 
-Tu sistema ShopGuard está funcionando.
+Tu sistema Vrovex está funcionando.
 
 **Sin credenciales TikTok:**
 - ✅ Frontend completo
@@ -198,3 +181,4 @@ Tu sistema ShopGuard está funcionando.
 **⚡ Tiempo total: ~5 minutos**
 
 **🛡️ Tu negocio de TikTok Shop ahora está protegido 24/7**
+

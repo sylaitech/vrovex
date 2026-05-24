@@ -1,4 +1,4 @@
-# 🛡️ ShopGuard - Account Protection for TikTok Shop
+# 🛡️ Vrovex - Account Protection for TikTok Shop
 
 Sistema completo de protección y monitoreo 24/7 para cuentas de TikTok Shop. Detecta problemas antes de que se conviertan en suspensiones, genera appeals automáticos con IA y escanea productos para compliance.
 
@@ -64,7 +64,7 @@ Ver **[SETUP.md](SETUP.md)** para instrucciones completas.
 ## 📦 Stack Tecnológico
 
 **Frontend:** React 19 + Vite 8 + Tailwind CSS 4  
-**Backend:** Node.js + Express + MongoDB  
+**Backend:** Node.js + Express + Supabase  
 **Monitoreo:** Node-Cron + Winston  
 **Notificaciones:** Nodemailer
 
@@ -105,7 +105,7 @@ Ver **[SETUP.md](SETUP.md)** para instrucciones completas.
 
 ## 📄 Licencia
 
-Propietario - ShopGuard © 2026
+Propietario - Vrovex © 2026
 
 ## 🆘 Soporte
 
@@ -115,3 +115,4 @@ Propietario - ShopGuard © 2026
 ---
 
 **⚡ Protege tu negocio 24/7. Solo falta conectar tu API de TikTok.**
+

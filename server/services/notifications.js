@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import User from '../models/User.js';
+import { supabase } from '../server.js';
 import logger from '../utils/logger.js';
 
 // Create email transporter
@@ -18,21 +18,25 @@ const transporter = nodemailer.createTransport({
  */
 export async function sendAlertEmail(userId, alert) {
   try {
-    const user = await User.findById(userId);
-    
-    if (!user || !user.alertPreferences.email) {
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('email, alert_email')
+      .eq('id', userId)
+      .single();
+
+    if (error || !user || !user.alert_email) {
       return;
     }
-    
+
     const emailTemplate = getAlertEmailTemplate(alert);
-    
+
     await transporter.sendMail({
-      from: `"ShopGuard Alerts" <${process.env.SMTP_USER}>`,
+      from: `"Vrovex Alerts" <${process.env.SMTP_USER}>`,
       to: user.email,
       subject: `🚨 ${alert.title}`,
       html: emailTemplate
     });
-    
+
     logger.info(`Alert email sent to ${user.email}`);
   } catch (error) {
     logger.error('Failed to send alert email:', error);
@@ -66,7 +70,7 @@ function getAlertEmailTemplate(alert) {
     <body>
       <div class="container">
         <div class="header">
-          <h1>🛡️ ShopGuard Alert</h1>
+          <h1>🛡️ Vrovex Alert</h1>
         </div>
         <div class="content">
           <p>Hola,</p>
@@ -85,11 +89,11 @@ function getAlertEmailTemplate(alert) {
           </a>
           
           <p style="margin-top: 30px; color: #666; font-size: 14px;">
-            Este es un mensaje automático de ShopGuard. Estamos monitoreando tu cuenta 24/7 para proteger tu negocio.
+            Este es un mensaje automático de Vrovex. Estamos monitoreando tu cuenta 24/7 para proteger tu negocio.
           </p>
         </div>
         <div class="footer">
-          <p>ShopGuard © 2026 | Account Protection for TikTok Shop</p>
+          <p>Vrovex © 2026 | Account Protection for TikTok Shop</p>
           <p>Para dejar de recibir estas alertas, actualiza tus preferencias en el dashboard.</p>
         </div>
       </div>
@@ -104,19 +108,64 @@ function getAlertEmailTemplate(alert) {
 export async function sendWelcomeEmail(user) {
   try {
     await transporter.sendMail({
-      from: `"ShopGuard" <${process.env.SMTP_USER}>`,
+      from: `"Vrovex" <${process.env.SMTP_USER}>`,
       to: user.email,
-      subject: '🎉 Bienvenido a ShopGuard',
+      subject: '🎉 Cuenta creada en Vrovex',
       html: `
-        <h1>¡Bienvenido a ShopGuard!</h1>
-        <p>Hola ${user.name},</p>
-        <p>Tu cuenta ha sido creada exitosamente. Ahora puedes conectar tus tiendas de TikTok Shop y comenzar a proteger tu negocio.</p>
-        <p><a href="${process.env.FRONTEND_URL || 'http://localhost:5174'}/dashboard">Ir al Dashboard</a></p>
+        <div style="font-family: Arial, sans-serif; color: #1F2937; line-height: 1.6;">
+          <h1 style="color: #003A5B;">¡Bienvenido a Vrovex!</h1>
+          <p>Hola ${user.name || 'amig@'},</p>
+          <p>Tu cuenta se ha creado correctamente. Estás a un paso de proteger tu tienda de TikTok Shop con Vrovex.</p>
+          <p>Para activar tu suscripción y obtener acceso completo por 30 días, completa el pago desde el dashboard.</p>
+          <p style="margin-top: 20px;">Cuando tu suscripción expire, tu acceso se cerrará automáticamente, y podrás renovarla cuando lo necesites.</p>
+          <a href="${process.env.FRONTEND_URL || 'http://localhost:5174'}/dashboard" style="display: inline-block; padding: 12px 24px; background: #0F766E; color: white; border-radius: 8px; text-decoration: none;">Ir a Vrovex</a>
+          <p style="margin-top: 24px; color: #4B5563;">Gracias por confiar en Vrovex para proteger tu negocio en TikTok Shop.</p>
+          <p style="margin-top: 16px; color: #6B7280; font-size: 14px;">Si tienes dudas, responde este correo y te ayudaremos.</p>
+        </div>
       `
     });
     
     logger.info(`Welcome email sent to ${user.email}`);
   } catch (error) {
     logger.error('Failed to send welcome email:', error);
+  }
+}
+
+export async function sendSubscriptionActivatedEmail(user) {
+  try {
+    const endDate = user.current_period_end
+      ? new Date(user.current_period_end).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })
+      : '30 días desde el pago';
+
+    await transporter.sendMail({
+      from: `"Vrovex" <${process.env.SMTP_USER}>`,
+      to: user.email,
+      subject: '✅ Tu suscripción en Vrovex está activa',
+      html: `
+        <div style="font-family: Arial, sans-serif; color: #1F2937; line-height: 1.6;">
+          <h1 style="color: #0F766E;">¡Bienvenido a Vrovex!</h1>
+          <p>Hola ${user.name || 'amig@'},</p>
+          <p>Tu pago se ha procesado correctamente y tu membresía en Vrovex está activa.</p>
+          <p>Ahora tienes acceso completo a la protección de tu tienda TikTok Shop durante 30 días, hasta el <strong>${endDate}</strong>.</p>
+          <div style="background: #ECFDF5; border-left: 4px solid #10B981; padding: 16px; margin: 24px 0; border-radius: 8px;">
+            <strong>Tu negocio está más seguro:</strong>
+            <ul style="margin: 12px 0 0 16px; color: #374151;">
+              <li>Monitoreo automático 24/7</li>
+              <li>Alertas por cualquier riesgo</li>
+              <li>Protección ante problemas en TikTok Shop</li>
+              <li>Acceso a reportes y propuestas de acción inmediata</li>
+            </ul>
+          </div>
+          <p>Cuando tu suscripción termine, tu acceso se cerrará automáticamente. Si quieres continuar, podrás renovarla directamente desde tu cuenta.</p>
+          <a href="${process.env.FRONTEND_URL || 'http://localhost:5174'}/dashboard" style="display: inline-block; padding: 12px 24px; background: #0F766E; color: white; border-radius: 8px; text-decoration: none;">Ir al Dashboard</a>
+          <p style="margin-top: 24px; color: #4B5563;">Gracias por confiar en Vrovex. Estamos cuidando tu tienda para que vos puedas concentrarte en vender.</p>
+          <p style="margin-top: 16px; color: #6B7280; font-size: 14px;">Si necesitas ayuda, contáctanos y te asistiremos de inmediato.</p>
+        </div>
+      `
+    });
+
+    logger.info(`Subscription activation email sent to ${user.email}`);
+  } catch (error) {
+    logger.error('Failed to send subscription activation email:', error);
   }
 }

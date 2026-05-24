@@ -1,7 +1,5 @@
 import cron from 'node-cron';
-import Shop from '../models/Shop.js';
-import Alert from '../models/Alert.js';
-import MetricsHistory from '../models/MetricsHistory.js';
+import { supabase } from '../server.js';
 import { getShopMetrics } from './tiktok.js';
 import { sendAlertEmail } from './notifications.js';
 import { calculateShieldScore, predictSuspensionRisk } from '../utils/analytics.js';
@@ -11,198 +9,195 @@ const LATE_DISPATCH_THRESHOLD = parseFloat(process.env.LATE_DISPATCH_THRESHOLD) 
 const ACCOUNT_HEALTH_CRITICAL = parseInt(process.env.ACCOUNT_HEALTH_CRITICAL) || 400;
 const VTR_MINIMUM = parseFloat(process.env.VTR_MINIMUM) || 95.0;
 
-/**
- * Check metrics for a single shop
- */
 async function checkShopMetrics(shop) {
   try {
-    logger.info(`Checking metrics for shop: ${shop.shopName}`);
-    
-    // Fetch latest metrics from TikTok
-    const metrics = await getShopMetrics(shop.tiktokAccessToken, shop.shopId);
-    
-    // Calculate shield score
+    logger.info(`Checking metrics for shop: ${shop.shop_name}`);
+
+    const metrics = await getShopMetrics(shop.tiktok_access_token, shop.shop_id);
     const shieldScore = calculateShieldScore(metrics);
-    
-    // Predict suspension risk
     const predictions = predictSuspensionRisk(metrics);
-    
-    // Update shop metrics
-    shop.metrics = {
-      ...metrics,
-      shieldScore
-    };
-    
-    // Determine shop status
-    if (metrics.accountHealth < ACCOUNT_HEALTH_CRITICAL || metrics.lateDispatchRate > LATE_DISPATCH_THRESHOLD) {
-      shop.status = 'critical';
-    } else if (metrics.lateDispatchRate > LATE_DISPATCH_THRESHOLD * 0.8 || metrics.validTrackingRate < VTR_MINIMUM) {
-      shop.status = 'warning';
-    } else {
-      shop.status = 'healthy';
-    }
-    
-    shop.lastSync = new Date();
-    await shop.save();
-    
-    // Save metrics history
-    await MetricsHistory.create({
-      shopId: shop._id,
-      timestamp: new Date(),
-      metrics: {
-        ...metrics,
-        shieldScore
-      },
-      predictions
+
+    const status =
+      metrics.accountHealth < ACCOUNT_HEALTH_CRITICAL || metrics.lateDispatchRate > LATE_DISPATCH_THRESHOLD
+        ? 'critical'
+        : metrics.lateDispatchRate > LATE_DISPATCH_THRESHOLD * 0.8 || metrics.validTrackingRate < VTR_MINIMUM
+        ? 'warning'
+        : 'healthy';
+
+    await supabase
+      .from('shops')
+      .update({
+        status,
+        last_sync: new Date().toISOString(),
+        metrics_account_health: metrics.accountHealth,
+        metrics_late_dispatch_rate: metrics.lateDispatchRate,
+        metrics_on_time_delivery_rate: metrics.onTimeDeliveryRate,
+        metrics_valid_tracking_rate: metrics.validTrackingRate,
+        metrics_shield_score: shieldScore,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', shop.id);
+
+    await supabase.from('metrics_history').insert({
+      shop_id: shop.id,
+      account_health: metrics.accountHealth,
+      late_dispatch_rate: metrics.lateDispatchRate,
+      on_time_delivery_rate: metrics.onTimeDeliveryRate,
+      valid_tracking_rate: metrics.validTrackingRate,
+      shield_score: shieldScore,
     });
-    
-    // Check for alerts
+
     await checkAndCreateAlerts(shop, metrics, predictions);
-    
-    logger.info(`✅ Metrics updated for shop: ${shop.shopName}`);
+
+    logger.info(`✅ Metrics updated for shop: ${shop.shop_name}`);
   } catch (error) {
-    logger.error(`Failed to check metrics for shop ${shop.shopName}:`, error);
+    logger.error(`Failed to check metrics for shop ${shop?.shop_name || shop?.id}:`, error);
   }
 }
 
-/**
- * Create alerts based on metrics
- */
 async function checkAndCreateAlerts(shop, metrics, predictions) {
+  const { data: existingAlerts = [] } = await supabase
+    .from('alerts')
+    .select('*')
+    .eq('shop_id', shop.id)
+    .eq('is_read', false);
+
   const alerts = [];
-  
-  // Late Dispatch Rate Alert
+  const now = new Date().toISOString();
+
   if (metrics.lateDispatchRate > LATE_DISPATCH_THRESHOLD) {
-    const existingAlert = await Alert.findOne({
-      shopId: shop._id,
-      category: 'late_dispatch',
-      status: 'active'
-    });
-    
-    if (!existingAlert) {
+    const alreadyExists = existingAlerts.some((alert) => alert.data?.category === 'late_dispatch');
+    if (!alreadyExists) {
       alerts.push({
-        shopId: shop._id,
-        userId: shop.userId,
-        type: 'danger',
-        category: 'late_dispatch',
-        title: 'Late Dispatch Rate Crítico',
-        description: `Estás en ${metrics.lateDispatchRate.toFixed(1)}% — El límite permitido de TikTok es ${LATE_DISPATCH_THRESHOLD}%. ${predictions.recommendedActions[0] || 'Revisa tus órdenes pendientes inmediatamente.'}`,
-        severity: 9,
-        metadata: {
-          currentRate: metrics.lateDispatchRate,
-          threshold: LATE_DISPATCH_THRESHOLD,
-          daysUntilCritical: predictions.daysUntilCritical
-        }
+        shop_id: shop.id,
+        alert_type: 'danger',
+        severity: 'critical',
+        message: `Estás en ${metrics.lateDispatchRate.toFixed(1)}% — el límite de TikTok es ${LATE_DISPATCH_THRESHOLD}%.`,
+        data: {
+          category: 'late_dispatch',
+          title: 'Late Dispatch Rate Crítico',
+          description: `Estás en ${metrics.lateDispatchRate.toFixed(1)}% — El límite permitido de TikTok es ${LATE_DISPATCH_THRESHOLD}%. ${predictions.recommendedActions?.[0] || 'Revisa tus órdenes pendientes inmediatamente.'}`,
+          metadata: {
+            currentRate: metrics.lateDispatchRate,
+            threshold: LATE_DISPATCH_THRESHOLD,
+            daysUntilCritical: predictions.daysUntilCritical,
+          },
+        },
+        is_read: false,
+        created_at: now,
       });
     }
   }
-  
-  // Account Health Alert
+
   if (metrics.accountHealth < ACCOUNT_HEALTH_CRITICAL) {
-    const existingAlert = await Alert.findOne({
-      shopId: shop._id,
-      category: 'account_health',
-      status: 'active'
-    });
-    
-    if (!existingAlert) {
+    const alreadyExists = existingAlerts.some((alert) => alert.data?.category === 'account_health');
+    if (!alreadyExists) {
       alerts.push({
-        shopId: shop._id,
-        userId: shop.userId,
-        type: 'danger',
-        category: 'account_health',
-        title: 'Account Health Score Crítico',
-        description: `Tu Account Health Score está en ${metrics.accountHealth}/1000. Riesgo de suspensión en ${predictions.daysUntilCritical} días si no se toman acciones correctivas.`,
-        severity: 10,
-        metadata: {
-          currentScore: metrics.accountHealth,
-          threshold: ACCOUNT_HEALTH_CRITICAL,
-          suspensionRisk: predictions.suspensionRisk
-        }
+        shop_id: shop.id,
+        alert_type: 'danger',
+        severity: 'critical',
+        message: `Tu Account Health Score está en ${metrics.accountHealth}/1000.`,
+        data: {
+          category: 'account_health',
+          title: 'Account Health Score Crítico',
+          description: `Tu Account Health Score está en ${metrics.accountHealth}/1000. Riesgo de suspensión en ${predictions.daysUntilCritical} días si no se toman acciones correctivas.`,
+          metadata: {
+            currentScore: metrics.accountHealth,
+            threshold: ACCOUNT_HEALTH_CRITICAL,
+            suspensionRisk: predictions.suspensionRisk,
+          },
+        },
+        is_read: false,
+        created_at: now,
       });
     }
   }
-  
-  // Valid Tracking Rate Alert
+
   if (metrics.validTrackingRate < VTR_MINIMUM) {
-    const existingAlert = await Alert.findOne({
-      shopId: shop._id,
-      category: 'vtr',
-      status: 'active'
-    });
-    
-    if (!existingAlert) {
+    const alreadyExists = existingAlerts.some((alert) => alert.data?.category === 'vtr');
+    if (!alreadyExists) {
       alerts.push({
-        shopId: shop._id,
-        userId: shop.userId,
-        type: 'warning',
-        category: 'vtr',
-        title: 'Valid Tracking Rate Bajo',
-        description: `Tu VTR está en ${metrics.validTrackingRate.toFixed(1)}%. El mínimo requerido es ${VTR_MINIMUM}%. Verifica que todos los números de tracking sean válidos.`,
-        severity: 7,
-        metadata: {
-          currentRate: metrics.validTrackingRate,
-          minimum: VTR_MINIMUM
-        }
+        shop_id: shop.id,
+        alert_type: 'warning',
+        severity: 'warning',
+        message: `Tu VTR está en ${metrics.validTrackingRate.toFixed(1)}%.`,
+        data: {
+          category: 'vtr',
+          title: 'Valid Tracking Rate Bajo',
+          description: `Tu VTR está en ${metrics.validTrackingRate.toFixed(1)}%. El mínimo requerido es ${VTR_MINIMUM}%. Verifica que todos los números de tracking sean válidos.`,
+          metadata: {
+            currentRate: metrics.validTrackingRate,
+            minimum: VTR_MINIMUM,
+          },
+        },
+        is_read: false,
+        created_at: now,
       });
     }
   }
-  
-  // Create alerts and send notifications
+
   if (alerts.length > 0) {
-    await Alert.insertMany(alerts);
-    
-    // Send email notifications
+    const { error } = await supabase.from('alerts').insert(alerts);
+    if (error) {
+      logger.error('Failed to insert alerts:', error);
+      return;
+    }
+
     for (const alert of alerts) {
       try {
-        await sendAlertEmail(shop.userId, alert);
+        await sendAlertEmail(shop.user_id, {
+          title: alert.data.title,
+          description: alert.data.description,
+          severity: alert.severity,
+          category: alert.data.category,
+        });
       } catch (error) {
         logger.error('Failed to send alert email:', error);
       }
     }
-    
-    logger.info(`Created ${alerts.length} new alerts for shop: ${shop.shopName}`);
+
+    logger.info(`Created ${alerts.length} new alerts for shop: ${shop.shop_name}`);
   }
 }
 
-/**
- * Start monitoring all active shops
- */
 export function startMetricsMonitoring() {
   const interval = process.env.METRICS_CHECK_INTERVAL || 5;
-  
-  // Run every X minutes
+
   cron.schedule(`*/${interval} * * * *`, async () => {
     logger.info('🔍 Starting metrics check cycle...');
-    
+
     try {
-      const activeShops = await Shop.find({ isActive: true }).populate('userId');
-      
+      const { data: activeShops = [], error } = await supabase
+        .from('shops')
+        .select('*')
+        .eq('is_active', true);
+
+      if (error) {
+        throw error;
+      }
+
       logger.info(`Found ${activeShops.length} active shops to monitor`);
-      
-      // Check metrics for all shops in parallel
-      await Promise.allSettled(
-        activeShops.map(shop => checkShopMetrics(shop))
-      );
-      
+      await Promise.allSettled(activeShops.map((shop) => checkShopMetrics(shop)));
       logger.info('✅ Metrics check cycle completed');
     } catch (error) {
       logger.error('Error in metrics monitoring cycle:', error);
     }
   });
-  
+
   logger.info(`📊 Metrics monitoring scheduled every ${interval} minutes`);
 }
 
-/**
- * Manual metrics refresh for a specific shop
- */
 export async function refreshShopMetrics(shopId) {
-  const shop = await Shop.findById(shopId);
-  if (!shop) {
+  const { data: shop, error } = await supabase
+    .from('shops')
+    .select('*')
+    .eq('id', shopId)
+    .single();
+
+  if (error || !shop) {
     throw new Error('Shop not found');
   }
-  
+
   await checkShopMetrics(shop);
   return shop;
 }

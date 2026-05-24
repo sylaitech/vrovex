@@ -1,4 +1,4 @@
-# ✅ ShopGuard - Checklist Final de Verificación
+# ✅ Vrovex - Checklist Final de Verificación
 
 ## 📋 Verificación Completa del Sistema
 
@@ -244,8 +244,7 @@
 
 ### 1. Verificar Requisitos
 - [ ] Node.js 18+ instalado
-- [ ] MongoDB 6+ instalado
-- [ ] MongoDB corriendo
+- [ ] Cuenta de Supabase configurada
 
 ### 2. Instalar Dependencias
 ```bash
@@ -295,9 +294,10 @@ TIKTOK_APP_SECRET=obtener-en-partner.tiktokshop.com
 4. [ ] Copiar APP_KEY y APP_SECRET
 5. [ ] Pegar en server/.env
 
-### REQUERIDO: MongoDB
+### REQUERIDO: Supabase
 ```env
-MONGODB_URI=mongodb://localhost:27017/shopguard
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
 ### REQUERIDO: JWT Secret
@@ -388,7 +388,7 @@ SMTP_PASS=app-password-de-gmail
 
 **Lo que necesitas:**
 1. Credenciales de TikTok Shop API
-2. Iniciar MongoDB
+2. Configurar Supabase
 3. Ejecutar `npm run dev` (x2)
 
 **Resultado:**
@@ -408,10 +408,11 @@ Sistema operativo protegiendo cuentas de TikTok Shop 24/7 con monitoreo automát
 
 ---
 
-**🛡️ ShopGuard está 100% completo y listo para producción.**
+**🛡️ Vrovex está 100% completo y listo para producción.**
 
 **Solo falta conectar tu API de TikTok y comenzar a monitorear.**
 
 ---
 
 *Desarrollado con ❤️ para proteger a los sellers de TikTok Shop.*
+

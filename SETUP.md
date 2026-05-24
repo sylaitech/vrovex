@@ -1,38 +1,15 @@
-# 🚀 ShopGuard - Guía de Instalación Completa
+# 🚀 Vrovex - Guía de Instalación Completa
 
 ## 📋 Requisitos del Sistema
 
 - **Node.js** 18 o superior
-- **MongoDB** 6 o superior
+- **Supabase** configurado o cuenta activa
 - **Git** (opcional)
 - **Navegador** Chrome/Firefox/Edge
 
 ## 🔧 Instalación Paso a Paso
 
-### 1. Instalar MongoDB
-
-#### Windows:
-```bash
-# Descargar desde: https://www.mongodb.com/try/download/community
-# Instalar y ejecutar:
-net start MongoDB
-```
-
-#### Linux:
-```bash
-sudo apt-get install mongodb
-sudo systemctl start mongod
-sudo systemctl enable mongod
-```
-
-#### Mac:
-```bash
-brew tap mongodb/brew
-brew install mongodb-community
-brew services start mongodb-community
-```
-
-### 2. Configurar Backend
+### 1. Configurar Backend
 
 ```bash
 # Navegar a la carpeta del servidor
@@ -45,7 +22,7 @@ npm install
 cp .env.example .env
 ```
 
-### 3. Configurar Variables de Entorno
+### 2. Configurar Variables de Entorno
 
 Editar `server/.env`:
 
@@ -54,8 +31,9 @@ Editar `server/.env`:
 PORT=5000
 NODE_ENV=development
 
-# Database
-MONGODB_URI=mongodb://localhost:27017/shopguard
+# Supabase
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
 # JWT (CAMBIAR ESTO)
 JWT_SECRET=tu-secret-super-seguro-aqui-cambiar
@@ -91,8 +69,7 @@ npm run dev
 
 Deberías ver:
 ```
-✅ Connected to MongoDB
-🚀 ShopGuard Backend running on port 5000
+🚀 Vrovex Backend running on port 5000
 📊 Environment: development
 🔍 Metrics monitoring started
 ```
@@ -133,7 +110,7 @@ Navegar a: **http://localhost:5174/**
 ### Paso 2: Crear Aplicación
 
 1. Dashboard → "Create App"
-2. Nombre: "ShopGuard"
+2. Nombre: "Vrovex"
 3. Tipo: "Seller Tools"
 4. Redirect URI: `http://localhost:5000/api/auth/tiktok/callback`
 
@@ -212,14 +189,11 @@ Abrir http://localhost:5174/ - Deberías ver la landing page con animaciones.
 
 ## 🐛 Solución de Problemas
 
-### MongoDB no inicia:
+### Supabase local no inicia:
 
 ```bash
-# Windows
-net start MongoDB
-
-# Linux/Mac
-sudo systemctl start mongod
+# Iniciar Supabase local si usas CLI
+supabase start
 ```
 
 ### Puerto 5000 ocupado:
@@ -233,15 +207,12 @@ PORT=5001
 
 El frontend automáticamente usará el siguiente disponible (5175, 5176, etc.)
 
-### Error "Cannot connect to MongoDB":
+### Error "Cannot connect to Supabase":
 
-Verificar que MongoDB esté corriendo:
+Verificar que Supabase esté accesible y las variables de entorno sean correctas:
 ```bash
-# Windows
-sc query MongoDB
-
-# Linux/Mac
-sudo systemctl status mongod
+# Revisar server/.env
+cat server/.env
 ```
 
 ### Error "Invalid TikTok credentials":
@@ -253,9 +224,8 @@ sudo systemctl status mongod
 ## 📦 Estructura del Proyecto
 
 ```
-shopguard/
+Vrovex/
 ├── server/                 # Backend Node.js
-│   ├── models/            # Modelos MongoDB
 │   ├── routes/            # Rutas API
 │   ├── services/          # Lógica de negocio
 │   ├── utils/             # Utilidades
@@ -289,20 +259,10 @@ npm run preview  # Preview del build
 
 ### Base de Datos:
 ```bash
-# Conectar a MongoDB
-mongosh
+# Conectar a Supabase local si usas CLI
+supabase start
 
-# Ver bases de datos
-show dbs
-
-# Usar ShopGuard
-use shopguard
-
-# Ver colecciones
-show collections
-
-# Ver usuarios
-db.users.find()
+# Acceder a la consola en el panel web de Supabase
 ```
 
 ## 📚 Próximos Pasos
@@ -318,11 +278,11 @@ db.users.find()
 
 - **Backend API**: Ver `server/README.md`
 - **TikTok API**: https://partner.tiktokshop.com/doc
-- **MongoDB**: https://docs.mongodb.com/
+- **Supabase**: https://supabase.com/docs/
 
 ## 🎉 ¡Listo!
 
-Tu instalación de ShopGuard está completa. El sistema ahora:
+Tu instalación de Vrovex está completa. El sistema ahora:
 
 - ✅ Monitorea tus tiendas cada 5 minutos
 - ✅ Detecta problemas antes de que sean críticos
@@ -332,3 +292,4 @@ Tu instalación de ShopGuard está completa. El sistema ahora:
 - ✅ Genera appeals con IA
 
 **Solo falta conectar tu API de TikTok y estás listo para proteger tu negocio 24/7.**
+

@@ -40,17 +40,17 @@ npm run dev
 
 ---
 
-## Cambios principales de MongoDB → Supabase
+## Migración y configuración de Supabase
 
-### ✅ Ventajas
-- ✅ Base de datos PostgreSQL (más robusta que MongoDB)
-- ✅ Auth integrado con Supabase
-- ✅ Row Level Security (RLS) para proteger datos
-- ✅ Realtime subscriptions
-- ✅ Backup automático
-- ✅ Sin servidor Node.js separado necesario
+### ✅ Qué obtienes con Supabase
+- ✅ Base de datos PostgreSQL con estructura relacional y consultas seguras
+- ✅ Autenticación y permisos centralizados
+- ✅ Row Level Security (RLS) para proteger datos sensibles
+- ✅ Realtime y sincronización opcional
+- ✅ Backups automáticos y control de versiones
+- ✅ Base de datos lista para producción sin dependencias Mongo
 
-### 📋 Tablas principales
+### 📋 Tablas principales definidas
 
 #### users
 - `id` (UUID) - Primary key
@@ -65,7 +65,7 @@ npm run dev
 - `user_id` - FK to users
 - `shop_id`, `shop_name`
 - `tiktok_access_token`, `tiktok_refresh_token`
-- `metrics_*` (account_health, late_dispatch_rate, etc)
+- `metrics_*` (account_health, late_dispatch_rate, etc.)
 - `status` (healthy, warning, critical, suspended)
 
 #### metrics_history

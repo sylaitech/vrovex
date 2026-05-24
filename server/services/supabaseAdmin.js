@@ -1,5 +1,5 @@
 /**
- * Sincroniza perfiles Mongo → Supabase cuando hay service role configurado.
+ * Sincroniza perfiles con Supabase cuando hay service role configurado.
  */
 import logger from '../utils/logger.js';
 

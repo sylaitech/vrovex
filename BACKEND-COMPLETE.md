@@ -1,4 +1,4 @@
-# ✅ ShopGuard Backend - 100% COMPLETO
+# ✅ Vrovex Backend - 100% COMPLETO
 
 ## 🎉 Estado: LISTO PARA PRODUCCIÓN
 
@@ -8,15 +8,15 @@ Todo el backend está implementado y funcional. **Solo falta conectar las creden
 
 ## 📁 Estructura Completa Creada
 
-### ✅ Modelos de Base de Datos (MongoDB)
+### ✅ Tablas de Base de Datos en Supabase
 ```
-server/models/
-├── User.js              ✅ Usuarios con autenticación
-├── Shop.js              ✅ Tiendas TikTok conectadas
-├── Alert.js             ✅ Sistema de alertas
-├── Appeal.js            ✅ Appeals generados
-└── MetricsHistory.js    ✅ Historial de métricas (90 días)
+supabase/migrations/001_init_schema.sql
 ```
+- `users`              ✅ Usuarios y planes activos
+- `shops`              ✅ Tiendas TikTok conectadas
+- `alerts`             ✅ Sistema de alertas
+- `appeals`            ✅ Appeals generados
+- `metrics_history`    ✅ Historial de métricas (90 días)
 
 ### ✅ Rutas API (Express)
 ```
@@ -114,7 +114,7 @@ server/
 ### ✅ Monitoreo en Tiempo Real
 - Cron job cada 5 minutos
 - Verifica todas las tiendas activas
-- Actualiza métricas en MongoDB
+- Actualiza métricas en Supabase
 - Calcula Shield Score (0-100)
 - Predice riesgo de suspensión
 
@@ -162,12 +162,12 @@ server/
 
 ## 📊 Base de Datos
 
-### Colecciones MongoDB
+### Tablas Supabase
 1. **users** - Usuarios registrados
 2. **shops** - Tiendas TikTok conectadas
 3. **alerts** - Alertas generadas
 4. **appeals** - Appeals creados
-5. **metricshistories** - Historial de métricas (TTL 90 días)
+5. **metrics_history** - Historial de métricas (TTL 90 días)
 
 ### Índices Optimizados
 - ✅ `users.email` (unique)
@@ -240,13 +240,10 @@ cp .env.example .env
 # Editar .env con tus credenciales
 ```
 
-### 3. Iniciar MongoDB
+### 3. Iniciar Supabase local
 ```bash
-# Windows
-net start MongoDB
-
-# Linux/Mac
-sudo systemctl start mongod
+# Si usas Supabase CLI
+supabase start
 ```
 
 ### 4. Iniciar Servidor
@@ -269,9 +266,10 @@ TIKTOK_APP_KEY=obtener-en-partner.tiktokshop.com
 TIKTOK_APP_SECRET=obtener-en-partner.tiktokshop.com
 ```
 
-### MongoDB (REQUERIDO)
+### Supabase (REQUERIDO)
 ```env
-MONGODB_URI=mongodb://localhost:27017/shopguard
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
 ### JWT (REQUERIDO - Cambiar)
@@ -371,7 +369,7 @@ SMTP_PASS=app-password-de-gmail
 
 Solo necesitas:
 1. Credenciales de TikTok Shop API
-2. Iniciar MongoDB
+2. Iniciar Supabase local
 3. Ejecutar `npm run dev`
 
 **El sistema comenzará a monitorear automáticamente cada 5 minutos y protegerá las cuentas 24/7.**
@@ -379,3 +377,4 @@ Solo necesitas:
 ---
 
 **Desarrollado con ❤️ para proteger a los sellers de TikTok Shop.**
+

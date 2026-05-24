@@ -11,6 +11,7 @@ export function AuthProvider({ children }) {
   const [currentPeriodEnd, setCurrentPeriodEnd] = useState(null);
   const [tiktokShopConnected, setTiktokShopConnected] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   const applyProfile = useCallback((data) => {
     if (!data) {
@@ -29,6 +30,22 @@ export function AuthProvider({ children }) {
   }, []);
 
   const refreshProfile = useCallback(async () => {
+    // Check for demo mode
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('demo')) {
+      setIsDemoMode(true);
+      applyProfile({
+        id: 'demo-user-123',
+        email: 'demo@vrovex.app',
+        role: 'user',
+        planStatus: 'active',
+        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        tiktokShopConnected: true
+      });
+      setLoading(false);
+      return;
+    }
+
     if (!api.token) {
       setLoading(false);
       return;
@@ -107,7 +124,8 @@ export function AuthProvider({ children }) {
       currentPeriodEnd,
       tiktokShopConnected,
       isPlanActive,
-      isAuthenticated: Boolean(user && api.token),
+      isAuthenticated: isDemoMode || Boolean(user && api.token),
+      isDemoMode,
       refreshProfile,
       login,
       register,
@@ -124,6 +142,7 @@ export function AuthProvider({ children }) {
       currentPeriodEnd,
       tiktokShopConnected,
       isPlanActive,
+      isDemoMode,
       refreshProfile,
       login,
       register,

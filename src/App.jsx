@@ -6,6 +6,7 @@ import SubscriptionBanner from './components/SubscriptionBanner';
 import ConnectTikTokButton from './components/ConnectTikTokButton';
 import AuthScreen from './components/AuthScreen';
 import AdminPanel from './components/AdminPanel';
+import ComplianceScannerUI from './components/ComplianceScannerUI';
 import { useI18n } from './i18n/I18nContext';
 import { useAuth } from './context/AuthContext';
 
@@ -24,7 +25,7 @@ function AmbientBackground() {
   );
 }
 
-export default function ShopGuardLanding() {
+export default function VrovexLanding() {
   const { t } = useI18n();
   const {
     isPlanActive,
@@ -46,6 +47,11 @@ export default function ShopGuardLanding() {
   const [complianceText, setComplianceText] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [complianceStatus, setComplianceStatus] = useState(null);
+  const [previewActivePlan, setPreviewActivePlan] = useState(false);
+  const [showComplianceScanner, setShowComplianceScanner] = useState(false);
+  const [selectedShopForScan, setSelectedShopForScan] = useState(null);
+
+  const planActive = isPlanActive || previewActivePlan;
 
   const shopsData = {
     US_Seller_Main: {
@@ -154,7 +160,18 @@ export default function ShopGuardLanding() {
     const params = new URLSearchParams(window.location.search);
     const billing = params.get('billing');
     const tiktok = params.get('tiktok');
-    if (billing === 'success') setBillingToast(t('billing.success'));
+    const demo = params.has('demo');
+    
+    if (demo) {
+      // Auto-navigate to dashboard in demo mode
+      setView('dashboard');
+      return;
+    }
+    
+    if (billing === 'success') {
+      setBillingToast(t('billing.success'));
+      setPreviewActivePlan(true);
+    }
     if (billing === 'canceled') setBillingToast(t('billing.canceled'));
     if (tiktok === 'connected') setBillingToast(t('tiktok.connected'));
     if (tiktok === 'blocked') setBillingToast(t('tiktok.blocked'));
@@ -273,7 +290,7 @@ export default function ShopGuardLanding() {
 
         <main className="harness-container flex-1 py-6 sm:py-8 space-y-6 relative z-10">
           <SubscriptionBanner />
-          {!isPlanActive ? (
+          {!planActive ? (
             <div className="card-elevated p-8 text-center">
               <h2 className="font-heading-sm mb-3">{t('dashboard.paywallTitle')}</h2>
               <p className="text-muted text-sm max-w-md mx-auto">{t('dashboard.paywallDesc')}</p>
@@ -411,7 +428,30 @@ export default function ShopGuardLanding() {
           )}
 
           {activeTab === 'compliance' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="space-y-4">
+              {/* Shop-Wide Compliance Scanner */}
+              <div className="card-elevated p-6 bg-gradient-to-br from-blue-900/20 to-cyan-900/20 border border-blue-700/30">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h2 className="font-heading-sm text-blue-300 flex items-center gap-2">
+                      🔍 Escáner de Incumplimiento
+                    </h2>
+                    <p className="text-sm text-blue-200 mt-2">Analiza tu tienda completa para detectar infracciones de políticas de TikTok Shop</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedShopForScan(selectedShop);
+                      setShowComplianceScanner(true);
+                    }}
+                    className="btn-pill-primary whitespace-nowrap bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 px-6"
+                  >
+                    Buscar Infracciones
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="card-elevated space-y-5">
                 <div>
                   <h2 className="font-heading-sm">Compliance sandbox</h2>
@@ -454,11 +494,19 @@ export default function ShopGuardLanding() {
                   </div>
                 )}
               </div>
+              </div>
             </div>
           )}
           </>
           )}
         </main>
+        
+        {showComplianceScanner && (
+          <ComplianceScannerUI
+            shopId={selectedShopForScan}
+            onClose={() => setShowComplianceScanner(false)}
+          />
+        )}
       </div>
     );
   }
@@ -695,3 +743,4 @@ export default function ShopGuardLanding() {
     </div>
   );
 }
+

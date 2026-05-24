@@ -16,7 +16,7 @@ export const translations = {
     auth: {
       titleLogin: 'Iniciar sesión',
       titleRegister: 'Crear cuenta',
-      subtitle: 'Accede a VROVEX ShopGuard',
+      subtitle: 'Accede a VROVEX Vrovex',
       email: 'Email',
       password: 'Contraseña',
       name: 'Nombre',
@@ -103,7 +103,7 @@ export const translations = {
     auth: {
       titleLogin: 'Log in',
       titleRegister: 'Create account',
-      subtitle: 'Access VROVEX ShopGuard',
+      subtitle: 'Access VROVEX Vrovex',
       email: 'Email',
       password: 'Password',
       name: 'Name',
@@ -174,3 +174,4 @@ export const translations = {
     },
   },
 };
+

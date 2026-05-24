@@ -20,6 +20,27 @@ function authPayload(user, token) {
   };
 }
 
+async function normalizeExpiredSubscription(user) {
+  if (!user || user.plan_status !== 'active' || !user.current_period_end) {
+    return user;
+  }
+
+  const expiresAt = new Date(user.current_period_end);
+  if (expiresAt <= new Date()) {
+    await supabase
+      .from('users')
+      .update({ plan_status: 'inactive' })
+      .eq('id', user.id);
+
+    return {
+      ...user,
+      plan_status: 'inactive'
+    };
+  }
+
+  return user;
+}
+
 // Register
 router.post('/register', async (req, res) => {
   try {
@@ -122,20 +143,22 @@ router.post('/login', async (req, res) => {
       .from('users')
       .update({ last_login: new Date().toISOString() })
       .eq('id', user.id);
+
+    const normalizedUser = await normalizeExpiredSubscription(user);
     
     // Generate token
     const token = jwt.sign(
       { 
-        userId: user.id,
-        email: user.email,
-        role: user.role,
-        planStatus: user.plan_status
+        userId: normalizedUser.id,
+        email: normalizedUser.email,
+        role: normalizedUser.role,
+        planStatus: normalizedUser.plan_status
       },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
     
-    res.json(authPayload(user, token));
+    res.json(authPayload(normalizedUser, token));
   } catch (error) {
     logger.error('Login error:', error);
     res.status(500).json({ error: error.message });
@@ -154,6 +177,8 @@ router.get('/me', auth, async (req, res) => {
     if (error || !user) {
       return res.status(404).json({ error: 'User not found' });
     }
+
+    const normalizedUser = await normalizeExpiredSubscription(user);
     
     // Get user's shops
     const { data: shops } = await supabase
@@ -162,12 +187,12 @@ router.get('/me', auth, async (req, res) => {
       .eq('user_id', req.userId);
     
     res.json({
-      ...user,
+      ...normalizedUser,
       shops: shops || [],
-      role: user.role,
-      planStatus: user.plan_status,
-      currentPeriodEnd: user.current_period_end,
-      tiktokShopConnected: user.tiktok_shop_connected
+      role: normalizedUser.role,
+      planStatus: normalizedUser.plan_status,
+      currentPeriodEnd: normalizedUser.current_period_end,
+      tiktokShopConnected: normalizedUser.tiktok_shop_connected
     });
   } catch (error) {
     logger.error('Get user error:', error);
@@ -175,32 +200,37 @@ router.get('/me', auth, async (req, res) => {
   }
 });
 
-export default router;
-      currentPeriodEnd: user.currentPeriodEnd,
-      tiktokShopConnected: user.tiktokShopConnected,
-      locale: user.locale,
-      isStaff: user.role === 'admin' || user.role === 'creator',
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Update user preferences
 router.patch('/preferences', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.userId);
-    
-    if (req.body.alertPreferences) {
-      user.alertPreferences = { ...user.alertPreferences, ...req.body.alertPreferences };
-    }
+    const updates = {};
     if (req.body.locale && ['es', 'en'].includes(req.body.locale)) {
-      user.locale = req.body.locale;
+      updates.locale = req.body.locale;
     }
-    
-    await user.save();
-    res.json(user);
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: 'No valid preference fields provided' });
+    }
+
+    const { data: updatedUser, error: updateError } = await supabase
+      .from('users')
+      .update(updates)
+      .eq('id', req.userId)
+      .select()
+      .single();
+
+    if (updateError || !updatedUser) {
+      throw updateError || new Error('Failed to update preferences');
+    }
+
+    res.json({
+      ...updatedUser,
+      role: updatedUser.role,
+      planStatus: updatedUser.plan_status,
+      currentPeriodEnd: updatedUser.current_period_end,
+      tiktokShopConnected: updatedUser.tiktok_shop_connected
+    });
   } catch (error) {
+    logger.error('Update preferences error:', error);
     res.status(500).json({ error: error.message });
   }
 });

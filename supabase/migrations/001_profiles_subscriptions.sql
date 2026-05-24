@@ -1,4 +1,4 @@
--- VROVEX / ShopGuard — perfiles, suscripciones y RLS
+-- VROVEX / Vrovex — perfiles, suscripciones y RLS
 
 -- Perfiles vinculados a Supabase Auth
 CREATE TABLE IF NOT EXISTS public.profiles (
@@ -107,3 +107,4 @@ CREATE POLICY "Insertar métricas solo con plan activo"
     )
     AND user_id = auth.uid()
   );
+

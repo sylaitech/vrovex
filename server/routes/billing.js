@@ -1,17 +1,26 @@
 import express from 'express';
-import User from '../models/User.js';
 import { auth } from '../middleware/auth.js';
 import { createCheckoutSession, stripeEnabled } from '../services/stripe.js';
+import { supabase } from '../server.js';
 
 const router = express.Router();
 
 router.get('/status', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.userId);
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('plan_status, current_period_end, tiktok_shop_connected')
+      .eq('id', req.userId)
+      .single();
+
+    if (error || !user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
     res.json({
-      planStatus: user.planStatus,
-      currentPeriodEnd: user.currentPeriodEnd,
-      tiktokShopConnected: user.tiktokShopConnected,
+      planStatus: user.plan_status,
+      currentPeriodEnd: user.current_period_end,
+      tiktokShopConnected: user.tiktok_shop_connected,
       stripeConfigured: stripeEnabled(),
     });
   } catch (error) {
@@ -27,7 +36,17 @@ router.post('/checkout', auth, async (req, res) => {
         message: 'Add STRIPE_SECRET_KEY and STRIPE_PRICE_ID to server .env',
       });
     }
-    const user = await User.findById(req.userId);
+
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('email')
+      .eq('id', req.userId)
+      .single();
+
+    if (error || !user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
     const session = await createCheckoutSession(req.userId, user.email);
     res.json({ url: session.url, sessionId: session.id });
   } catch (error) {
