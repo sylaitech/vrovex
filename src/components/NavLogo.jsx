@@ -7,6 +7,7 @@ export default function NavLogo({ onClick, className = '' }) {
         src={LOGO_SRC}
         alt=""
         decoding="async"
+        fetchPriority="high"
         className="nav-logo-glow nav-logo-img"
       />
     </span>

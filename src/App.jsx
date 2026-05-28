@@ -582,35 +582,12 @@ export default function VrovexLanding() {
               <a href="#how-it-works" className="btn-pill-ghost">{t('hero.cta')}</a>
             </div>
           </div>
-          <div className="video-slot reveal-on-load reveal-delay-4">
-            <div className="video-slot-fallback">
-              <div className="flex flex-col items-center gap-4 py-8">
-                <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center">
-                  <span className="text-3xl">🛡️</span>
-                </div>
-                <p className="text-label text-center">Vrovex Shield</p>
-                <p className="text-muted text-sm text-center max-w-xs">Protección activa 24/7 para tu tienda TikTok Shop</p>
-              </div>
-            </div>
-          </div>
         </div>
       </header>
 
       <section className="section-sm relative z-10">
-        <div className="harness-container flex flex-col md:flex-row items-center justify-center gap-6">
-          <span className="text-label">Trusted on</span>
-          <div className="flex flex-wrap justify-center gap-8 text-muted">
-            {['TikTok Shop', 'Shopify', 'WooCommerce', 'BigCommerce'].map((b) => (
-              <span key={b}>{b}</span>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="section-sm relative z-10">
-        <div className="harness-container grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="harness-container grid grid-cols-1 md:grid-cols-2 gap-8">
           {[
-            { val: '700K+', label: 'Sellers baneados (6 meses)' },
             { val: '$20K', label: 'Revenue diario perdido' },
             { val: '48H', label: 'Ventana crítica pre-ban' },
           ].map((s) => (
@@ -625,7 +602,7 @@ export default function VrovexLanding() {
       <section id="how-it-works" className="section relative z-10">
         <div className="harness-container">
           <div className="card-elevated card-interactive" style={{ paddingLeft: 'clamp(24px, 8vw, 56px)' }}>
-            <h2 className="font-heading-lg title-hover">Operaciones sin fricción.</h2>
+            <h2 className="font-heading-lg title-hover" style={{ fontSize: 'clamp(26px, 7vw, 56px)', overflowWrap: 'break-word', wordBreak: 'break-word' }}>Operaciones sin fricción.</h2>
             <p className="text-hero-sub mt-4 max-w-xl">Tres capas que blindan tu facturación en segundo plano.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
@@ -743,13 +720,11 @@ export default function VrovexLanding() {
       </section>
 
       <footer className="section-sm border-t border-graphite relative z-10">
-        <div className="harness-container flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted">
-          <span className="font-heading-sm text-base">VyshAI Shield © 2026</span>
+        <div className="harness-container flex flex-col md:flex-row items-center justify-center gap-4 text-sm text-muted">
           <div className="flex gap-6">
             <a href="#" className="nav-ghost text-sm">Términos</a>
             <a href="#" className="nav-ghost text-sm">Privacidad</a>
           </div>
-          <span className="text-label normal-case">5 min setup</span>
         </div>
       </footer>
     </div>

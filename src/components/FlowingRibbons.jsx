@@ -18,7 +18,7 @@ function catmullRom2bezier(points) {
 }
 
 function buildRibbonPoints(t, config) {
-  const { phase, baseY, amp, freq, steps = 28, width = 1.4 } = config;
+  const { phase, baseY, amp, freq, steps, width = 1.4 } = config;
   const pts = [];
   for (let i = 0; i <= steps; i++) {
     const progress = i / steps;
@@ -32,6 +32,11 @@ function buildRibbonPoints(t, config) {
   return pts;
 }
 
+// Main paths run at 24fps — slow organic motion is indistinguishable from 60fps
+// Blur/glow paths run at 8fps — heavy feGaussianBlur is invisible at low update rate
+const FRAME_INTERVAL = 1000 / 24;
+const GLOW_DIVISOR = 3; // glow updates every 3rd tick → ~8fps
+
 export default function FlowingRibbons() {
   const pathRef1 = useRef(null);
   const pathRef2 = useRef(null);
@@ -41,24 +46,41 @@ export default function FlowingRibbons() {
   const groupRef = useRef(null);
   const rafRef = useRef(null);
   const startRef = useRef(null);
+  const lastRef = useRef(0);
+  const tickCount = useRef(0);
 
   useEffect(() => {
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    const steps = isMobile ? 10 : 14;
+
+    // Hide expensive blur paths on mobile — blurred glow is imperceptible anyway
+    if (isMobile) {
+      if (glowRef1.current) glowRef1.current.setAttribute('visibility', 'hidden');
+      if (glowRef2.current) glowRef2.current.setAttribute('visibility', 'hidden');
+    }
+
     const applyPaths = (t) => {
+      const isGlowFrame = !isMobile && tickCount.current % GLOW_DIVISOR === 0;
+
       const d1 = catmullRom2bezier(
-        buildRibbonPoints(t, { phase: 0, baseY: 280, amp: 140, freq: 2.1 })
+        buildRibbonPoints(t, { phase: 0, baseY: 280, amp: 140, freq: 2.1, steps })
       );
       const d2 = catmullRom2bezier(
-        buildRibbonPoints(t, { phase: 2.4, baseY: 520, amp: 110, freq: 2.6, width: 0.9 })
+        buildRibbonPoints(t, { phase: 2.4, baseY: 520, amp: 110, freq: 2.6, width: 0.9, steps })
       );
       const d3 = catmullRom2bezier(
-        buildRibbonPoints(t, { phase: 4.2, baseY: 400, amp: 85, freq: 3.2, width: 0.7 })
+        buildRibbonPoints(t, { phase: 4.2, baseY: 400, amp: 85, freq: 3.2, width: 0.7, steps })
       );
 
       if (pathRef1.current) pathRef1.current.setAttribute('d', d1);
       if (pathRef2.current) pathRef2.current.setAttribute('d', d2);
       if (pathRef3.current) pathRef3.current.setAttribute('d', d3);
-      if (glowRef1.current) glowRef1.current.setAttribute('d', d1);
-      if (glowRef2.current) glowRef2.current.setAttribute('d', d2);
+
+      // Only recompute blur paths every 3rd frame — feGaussianBlur is the heaviest op
+      if (isGlowFrame) {
+        if (glowRef1.current) glowRef1.current.setAttribute('d', d1);
+        if (glowRef2.current) glowRef2.current.setAttribute('d', d2);
+      }
 
       if (groupRef.current) {
         const driftX = Math.sin(t * 0.35) * 18;
@@ -73,18 +95,33 @@ export default function FlowingRibbons() {
 
     applyPaths(0);
 
+    // Page visibility — pause RAF when tab is hidden
+    const handleVisibility = () => {
+      if (document.hidden) {
+        if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      } else {
+        lastRef.current = 0;
+        startRef.current = null;
+        rafRef.current = requestAnimationFrame(tick);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
     const tick = (now) => {
-      if (!startRef.current) startRef.current = now;
-      const t = (now - startRef.current) * 0.00012;
-
-      applyPaths(t);
-
       rafRef.current = requestAnimationFrame(tick);
+      if (now - lastRef.current < FRAME_INTERVAL) return;
+      lastRef.current = now;
+      tickCount.current += 1;
+      if (!startRef.current) startRef.current = now;
+      applyPaths((now - startRef.current) * 0.00012);
     };
 
     rafRef.current = requestAnimationFrame(tick);
+
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, []);
 

@@ -93,6 +93,7 @@ body {
   z-index: 0;
   overflow: hidden;
   background: var(--color-absolute-zero);
+  contain: paint;
 }
 
 /* Flowing ribbon lines — slow organic drift */
@@ -103,6 +104,8 @@ body {
   pointer-events: none;
   overflow: hidden;
   opacity: 0.75;
+  contain: paint;
+  will-change: transform;
 }
 
 .flow-ribbons-svg {
