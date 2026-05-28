@@ -36,6 +36,7 @@ export default function VrovexLanding() {
     user,
   } = useAuth();
   const [view, setView] = useState('landing');
+  const [resetToken, setResetToken] = useState(null);
   const [billingToast, setBillingToast] = useState(null);
   const [openFaq, setOpenFaq] = useState(0);
   const [selectedShop, setSelectedShop] = useState('US_Seller_Main');
@@ -107,8 +108,11 @@ export default function VrovexLanding() {
         return header + `Apelación por Late Dispatch Rate (${currentShopData.lateDispatch}%). Causa: retraso API transportista. Acciones correctivas implementadas.\n\n${selectedShop}`;
       case 'compliance_copyright':
         return header + `Apelación copyright/IP. Documentación de autorización adjunta en Seller Center.\n\n${selectedShop}`;
+      case 'account_health':
       case 'seller_metrics':
         return header + `Revisión Account Health (${currentShopData.accountHealth}/1000). Solicitud de auditoría por picos anómalos de quejas.\n\n${selectedShop}`;
+      case 'banned':
+        return header + `Apelación formal por suspensión de cuenta. Solicitamos revisión exhaustiva del motivo de ban y reinstauración inmediata del acceso. Adjuntamos documentación de cumplimiento y acciones correctivas.\n\n${selectedShop}`;
       default:
         return '';
     }
@@ -154,20 +158,25 @@ export default function VrovexLanding() {
     }, 1400);
   };
 
-  const [heroVideoReady, setHeroVideoReady] = useState(false);
-
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const billing = params.get('billing');
     const tiktok = params.get('tiktok');
+    const reset = params.get('reset');
     const demo = params.has('demo');
-    
+
+    if (reset) {
+      setResetToken(reset);
+      window.history.replaceState({}, '', window.location.pathname);
+      setView('auth');
+      return;
+    }
+
     if (demo) {
-      // Auto-navigate to dashboard in demo mode
       setView('dashboard');
       return;
     }
-    
+
     if (billing === 'success') {
       setBillingToast(t('billing.success'));
       setPreviewActivePlan(true);
@@ -181,6 +190,12 @@ export default function VrovexLanding() {
       setView('dashboard');
     }
   }, [t]);
+
+  useEffect(() => {
+    if (!billingToast) return;
+    const timer = setTimeout(() => setBillingToast(null), 5000);
+    return () => clearTimeout(timer);
+  }, [billingToast]);
 
   const handleGetStarted = () => {
     if (!isAuthenticated) {
@@ -209,7 +224,11 @@ export default function VrovexLanding() {
     return (
       <div className="harness-app">
         <AmbientBackground />
-        <AuthScreen onSuccess={afterAuth} onBack={() => setView('landing')} />
+        <AuthScreen
+          onSuccess={afterAuth}
+          onBack={() => { setView('landing'); setResetToken(null); }}
+          resetToken={resetToken}
+        />
       </div>
     );
   }
@@ -394,8 +413,9 @@ export default function VrovexLanding() {
                     <label className="text-label block mb-2">Categoría</label>
                     <select value={appealCategory} onChange={(e) => setAppealCategory(e.target.value)} className="input-outlined">
                       <option value="late_dispatch">Late Dispatch</option>
-                      <option value="compliance_copyright">Copyright</option>
-                      <option value="seller_metrics">Account Health</option>
+                      <option value="compliance_copyright">Copyright / Marca</option>
+                      <option value="account_health">Account Health</option>
+                      <option value="banned">Cuenta suspendida / Baneada</option>
                     </select>
                   </div>
                   <div>
@@ -563,22 +583,14 @@ export default function VrovexLanding() {
             </div>
           </div>
           <div className="video-slot reveal-on-load reveal-delay-4">
-            <video
-              className="video-slot-media"
-              controls
-              playsInline
-              preload="metadata"
-              onLoadedData={() => setHeroVideoReady(true)}
-              onCanPlay={() => setHeroVideoReady(true)}
-              onError={() => setHeroVideoReady(false)}
-            >
-              <source src="/explain.mp4" type="video/mp4" />
-            </video>
-            <div className={`video-slot-fallback${heroVideoReady ? ' hidden' : ''}`}>
-              <p className="text-label">{t('hero.videoLabel')}</p>
-              <p className="text-muted text-sm mt-3 max-w-xs">
-                {t('hero.videoHint')}
-              </p>
+            <div className="video-slot-fallback">
+              <div className="flex flex-col items-center gap-4 py-8">
+                <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center">
+                  <span className="text-3xl">🛡️</span>
+                </div>
+                <p className="text-label text-center">Vrovex Shield</p>
+                <p className="text-muted text-sm text-center max-w-xs">Protección activa 24/7 para tu tienda TikTok Shop</p>
+              </div>
             </div>
           </div>
         </div>

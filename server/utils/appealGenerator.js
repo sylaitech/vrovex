@@ -112,6 +112,53 @@ ${shop.shopName} - Dirección General
 Contacto: ${customData.contactEmail || 'admin@' + shop.shopName.toLowerCase().replace(/\s/g, '') + '.com'}`;
       break;
       
+    case 'account_health':
+      content = `Estimado Comité de Apelaciones de TikTok Shop,
+
+Solicitamos formalmente una revisión exhaustiva de nuestro Account Health Score actual (${shop.metrics?.accountHealth || shop.metrics?.account_health || 'N/A'}/1000) bajo el amparo de la sección de soporte al vendedor partner.
+
+1. ANÁLISIS DE LA SITUACIÓN:
+Hemos identificado un patrón anómalo de quejas repetidas provenientes de cuentas específicas de usuarios. Estas cuentas presentan comportamiento sospechoso coordinado: múltiples compras seguidas de devoluciones inmediatas sin justificación válida y reseñas negativas idénticas publicadas en corto período de tiempo.
+
+2. EVIDENCIA:
+- Capturas de pantalla de las reseñas y quejas con timestamps.
+- Análisis de patrones de comportamiento de las cuentas involucradas.
+- Historial de satisfacción del cliente superior al 95% previo al incidente.
+
+3. SOLICITUD:
+Pedimos una auditoría detallada de las órdenes afectadas y el restablecimiento de nuestro estatus operativo saludable una vez confirmado el ataque malicioso.
+
+Atentamente,
+${shop.shopName} - Dirección General
+Contacto: ${customData.contactEmail || 'admin@' + shop.shopName.toLowerCase().replace(/\s/g, '') + '.com'}`;
+      break;
+
+    case 'banned':
+      content = `Estimado Departamento de Apelaciones de TikTok Shop,
+
+Nos dirigimos a ustedes para apelar formalmente la suspensión de nuestra cuenta de vendedor ${shop.shopName} (ID: ${shop.shopId}).
+
+1. DECLARACIÓN:
+Somos un vendedor legítimo y comprometido con las políticas de TikTok Shop. La suspensión de nuestra cuenta ha generado un impacto severo en nuestras operaciones y en la confianza de nuestros clientes.
+
+2. SOLICITUD DE REVISIÓN:
+Solicitamos respetuosamente una revisión exhaustiva del motivo de la suspensión. Si existe alguna infracción específica, solicitamos ser informados de manera detallada para poder subsanarla de inmediato.
+
+3. ACCIONES CORRECTIVAS:
+- Revisamos íntegramente nuestro catálogo y operaciones para identificar cualquier área de mejora.
+- Implementamos protocolos adicionales de cumplimiento en todas las etapas de nuestra operación.
+- Estamos dispuestos a proporcionar toda la documentación necesaria para demostrar nuestra buena fe.
+
+4. COMPROMISO:
+Nos comprometemos a mantener el más alto estándar de cumplimiento de las políticas de TikTok Shop y a colaborar de manera transparente con el equipo de compliance.
+
+Solicitamos la reactivación inmediata de nuestra cuenta y quedamos a su entera disposición.
+
+Atentamente,
+${shop.shopName}
+Contacto: ${customData.contactEmail || 'support@' + shop.shopName.toLowerCase().replace(/\s/g, '') + '.com'}`;
+      break;
+
     default:
       content = `Estimado Equipo de TikTok Shop,
 

@@ -169,3 +169,30 @@ export async function sendSubscriptionActivatedEmail(user) {
     logger.error('Failed to send subscription activation email:', error);
   }
 }
+
+export async function sendPasswordResetEmail(user, resetUrl) {
+  try {
+    await transporter.sendMail({
+      from: `"Vrovex Shield" <${process.env.SMTP_USER}>`,
+      to: user.email,
+      subject: '🔐 Restablecer contraseña — Vrovex Shield',
+      html: `
+        <div style="font-family: Arial, sans-serif; background: #0F172A; color: #E2E8F0; padding: 40px; border-radius: 12px; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #2DD4BF; font-size: 24px; margin-bottom: 8px;">Vrovex Shield</h1>
+          <h2 style="color: #F1F5F9; font-size: 18px; margin-bottom: 24px;">Restablece tu contraseña</h2>
+          <p style="color: #CBD5E1;">Hola ${user.name || 'amig@'},</p>
+          <p style="color: #CBD5E1;">Recibimos una solicitud para restablecer la contraseña de tu cuenta Vrovex Shield. Haz clic en el botón de abajo para crear una nueva contraseña.</p>
+          <div style="text-align: center; margin: 32px 0;">
+            <a href="${resetUrl}" style="display: inline-block; background: #0F766E; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">Restablecer contraseña</a>
+          </div>
+          <p style="color: #94A3B8; font-size: 13px;">Este enlace expira en 1 hora. Si no solicitaste el restablecimiento, ignora este correo.</p>
+          <p style="color: #64748B; font-size: 12px; margin-top: 24px;">Vrovex Shield © 2026 | Account Protection for TikTok Shop</p>
+        </div>
+      `
+    });
+    logger.info(`Password reset email sent to ${user.email}`);
+  } catch (error) {
+    logger.error('Failed to send password reset email:', error);
+    throw error;
+  }
+}

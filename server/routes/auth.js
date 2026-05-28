@@ -1,8 +1,9 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { supabase } from '../server.js';
-import { sendWelcomeEmail } from '../services/notifications.js';
+import { sendWelcomeEmail, sendPasswordResetEmail } from '../services/notifications.js';
 import { auth } from '../middleware/auth.js';
 import { isCreatorEmail } from '../utils/creator.js';
 import logger from '../utils/logger.js';
@@ -231,6 +232,70 @@ router.patch('/preferences', auth, async (req, res) => {
     });
   } catch (error) {
     logger.error('Update preferences error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Forgot password
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email required' });
+
+    const { data: user } = await supabase
+      .from('users')
+      .select('id, email, name')
+      .eq('email', email.toLowerCase().trim())
+      .single();
+
+    if (!user) {
+      return res.json({ message: 'If that email is registered, you will receive a reset link.' });
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expires = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+
+    await supabase
+      .from('users')
+      .update({ reset_password_token: token, reset_password_expires: expires })
+      .eq('id', user.id);
+
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5174'}/?reset=${token}`;
+    await sendPasswordResetEmail(user, resetUrl).catch(() => {});
+
+    res.json({ message: 'If that email is registered, you will receive a reset link.' });
+  } catch (error) {
+    logger.error('Forgot password error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Reset password
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) return res.status(400).json({ error: 'Token and password required' });
+
+    const { data: user } = await supabase
+      .from('users')
+      .select('id, reset_password_expires')
+      .eq('reset_password_token', token)
+      .single();
+
+    if (!user || new Date(user.reset_password_expires) < new Date()) {
+      return res.status(400).json({ error: 'Reset link is invalid or has expired' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await supabase
+      .from('users')
+      .update({ password_hash: hashedPassword, reset_password_token: null, reset_password_expires: null })
+      .eq('id', user.id);
+
+    res.json({ message: 'Password reset successfully. You can now log in.' });
+  } catch (error) {
+    logger.error('Reset password error:', error);
     res.status(500).json({ error: error.message });
   }
 });
