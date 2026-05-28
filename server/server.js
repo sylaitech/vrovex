@@ -84,19 +84,20 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-// Start server
-const server = app.listen(PORT, () => {
-  logger.info(`✅ Server running on port ${PORT}`);
-  logger.info(`🔗 Supabase connected: ${process.env.SUPABASE_URL}`);
-  startMetricsMonitoring();
-  logger.info('🔍 Metrics monitoring started');
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  logger.info('SIGTERM received, shutting down gracefully');
-  server.close(() => {
-    logger.info('HTTP server closed');
-    process.exit(0);
+// Vercel serverless: export app as default, no app.listen()
+// Local dev: listen on PORT
+if (!process.env.VERCEL) {
+  const server = app.listen(PORT, () => {
+    logger.info(`Server running on port ${PORT}`);
+    logger.info(`Supabase connected: ${process.env.SUPABASE_URL}`);
+    startMetricsMonitoring();
   });
-});
+
+  process.on('SIGTERM', () => {
+    server.close(() => process.exit(0));
+  });
+} else {
+  startMetricsMonitoring();
+}
+
+export default app;
