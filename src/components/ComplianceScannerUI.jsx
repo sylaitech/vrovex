@@ -1,18 +1,76 @@
-import React, { useState, useEffect } from 'react';
-import { AlertCircle, CheckCircle, Clock, Zap, Shield } from 'lucide-react';
+import { useState } from 'react';
+
+const RADIUS = 80;
+const CIRC = 2 * Math.PI * RADIUS;
+
+function RingProgress({ progress, status }) {
+  const offset = CIRC * (1 - Math.min(progress, 100) / 100);
+  const stroke =
+    status === 'critical' ? '#ef4444'
+    : status === 'warning'  ? '#f59e0b'
+    : '#70dcd3';
+
+  return (
+    <svg viewBox="0 0 200 200" className="w-full h-full" style={{ transform: 'rotate(-90deg)' }}>
+      <circle cx="100" cy="100" r={RADIUS} fill="none" stroke="#2e3038" strokeWidth="10" />
+      <circle
+        cx="100" cy="100" r={RADIUS}
+        fill="none"
+        stroke={stroke}
+        strokeWidth="10"
+        strokeLinecap="round"
+        strokeDasharray={CIRC}
+        strokeDashoffset={offset}
+        style={{ transition: 'stroke-dashoffset 0.6s cubic-bezier(0.4,0,0.2,1), stroke 0.4s ease' }}
+      />
+    </svg>
+  );
+}
+
+function CategoryRow({ label, progress, done }) {
+  return (
+    <div style={{ borderBottom: '1px solid #2e3038', padding: '12px 0' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+        <span style={{ fontSize: 13, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#aeaeb7', fontFamily: 'var(--font-geist)', fontWeight: 500 }}>
+          {label}
+        </span>
+        <span style={{
+          fontSize: 12,
+          fontFamily: 'var(--font-calsans)',
+          fontWeight: 600,
+          color: done ? '#70dcd3' : '#aeaeb7',
+          letterSpacing: '0.04em',
+        }}>
+          {done ? 'OK' : `${Math.round(progress)}%`}
+        </span>
+      </div>
+      <div style={{ height: 3, background: '#2e3038', borderRadius: 2, overflow: 'hidden' }}>
+        <div style={{
+          height: '100%',
+          width: `${Math.min(progress, 100)}%`,
+          background: done ? '#70dcd3' : 'linear-gradient(90deg, #0092e4, #70dcd3)',
+          borderRadius: 2,
+          transition: 'width 0.3s ease',
+        }} />
+      </div>
+    </div>
+  );
+}
+
+function SeverityDot({ level }) {
+  const color = level >= 9 ? '#ef4444' : level >= 6 ? '#f59e0b' : level >= 4 ? '#eab308' : '#70dcd3';
+  return <span style={{ width: 8, height: 8, borderRadius: '50%', background: color, display: 'inline-block', flexShrink: 0, marginTop: 6 }} />;
+}
 
 export default function ComplianceScannerUI({ shopId, onClose }) {
-  const [scanState, setScanState] = useState('idle'); // idle, scanning, completed
+  const [scanState, setScanState] = useState('idle');
   const [scanResults, setScanResults] = useState(null);
-  const [scanProgress, setScanProgress] = useState({
-    policies: 0,
-    trademarks: 0,
-    health: 0,
-    claims: 0,
-    restricted: 0
-  });
+  const [scanProgress, setScanProgress] = useState({ policies: 0, trademarks: 0, health: 0, claims: 0, restricted: 0 });
   const [error, setError] = useState(null);
   const [scanDuration, setScanDuration] = useState(0);
+
+  const overallProgress = scanState === 'completed' ? 100
+    : Math.round((scanProgress.policies + scanProgress.trademarks + scanProgress.health + scanProgress.claims + scanProgress.restricted) / 5);
 
   const startScan = async () => {
     setScanState('scanning');
@@ -22,79 +80,46 @@ export default function ComplianceScannerUI({ shopId, onClose }) {
     const startTime = Date.now();
 
     try {
-      // Simular progreso visual
       const progressInterval = setInterval(() => {
         setScanProgress(prev => ({
-          policies: Math.min(prev.policies + Math.random() * 25, 100),
+          policies:   Math.min(prev.policies   + Math.random() * 25, 100),
           trademarks: Math.min(prev.trademarks + Math.random() * 20, 100),
-          health: Math.min(prev.health + Math.random() * 30, 100),
-          claims: Math.min(prev.claims + Math.random() * 25, 100),
-          restricted: Math.min(prev.restricted + Math.random() * 28, 100)
+          health:     Math.min(prev.health     + Math.random() * 30, 100),
+          claims:     Math.min(prev.claims     + Math.random() * 25, 100),
+          restricted: Math.min(prev.restricted + Math.random() * 28, 100),
         }));
         setScanDuration(Math.floor((Date.now() - startTime) / 1000));
       }, 300);
 
-      // Intentar obtener del endpoint, pero con fallback a datos simulados
-      let scanResults;
+      let results;
       try {
-        const response = await fetch(`/api/shops/${shopId}/scan-compliance`, {
+        const res = await fetch(`/api/shops/${shopId}/scan-compliance`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
         });
-
-        if (response.ok) {
-          scanResults = await response.json();
-        } else {
-          throw new Error('API not available');
-        }
-      } catch (apiError) {
-        // Usar datos simulados si la API no está disponible
-        scanResults = {
+        if (res.ok) results = await res.json();
+        else throw new Error('API not available');
+      } catch {
+        results = {
           status: 'warning',
           riskLevel: 6,
           issues: [
-            {
-              type: 'health_product',
-              severity: 7,
-              message: 'Se detectaron productos de salud que requieren certificación',
-              keyword: 'supplement'
-            },
-            {
-              type: 'trademark_risk',
-              severity: 5,
-              message: 'Posible referencia a marca registrada detectada',
-              keyword: 'branded'
-            }
+            { type: 'health_product', severity: 7, message: 'Productos de salud requieren certificación', keyword: 'supplement' },
+            { type: 'trademark_risk', severity: 5, message: 'Posible referencia a marca registrada detectada', keyword: 'branded' },
           ],
           recommendations: [
-            '⚠️ PRECAUCIÓN: Se detectaron problemas en tu tienda',
             'Revisa los listados de salud para obtener certificaciones requeridas',
             'Verifica referencias de marcas registradas',
-            'Considera consultar con el equipo legal'
+            'Consulta con el equipo legal antes de publicar',
           ],
-          summary: {
-            totalIssues: 2,
-            criticalIssues: 0,
-            warningIssues: 2,
-            cautionIssues: 0,
-            minorIssues: 0,
-            issuesByType: {
-              prohibited: 0,
-              health: 1,
-              trademark: 1,
-              misleading: 0,
-              restricted: 0,
-              counterfeit: 0
-            }
-          },
-          scannedAt: new Date().toISOString()
+          summary: { totalIssues: 2, criticalIssues: 0, warningIssues: 2, cautionIssues: 0, minorIssues: 0 },
+          scannedAt: new Date().toISOString(),
         };
       }
 
       clearInterval(progressInterval);
-
       setScanProgress({ policies: 100, trademarks: 100, health: 100, claims: 100, restricted: 100 });
-      setScanResults(scanResults);
+      setScanResults(results);
       setScanState('completed');
     } catch (err) {
       setError(err.message);
@@ -102,243 +127,259 @@ export default function ComplianceScannerUI({ shopId, onClose }) {
     }
   };
 
-  const getSeverityColor = (severity) => {
-    if (severity >= 9) return 'text-red-600';
-    if (severity >= 6) return 'text-orange-600';
-    if (severity >= 4) return 'text-yellow-600';
-    return 'text-blue-600';
-  };
+  const resultStatus =
+    scanResults?.riskLevel >= 9 ? 'critical'
+    : scanResults?.riskLevel >= 5 ? 'warning'
+    : 'ok';
 
-  const getSeverityBg = (severity) => {
-    if (severity >= 9) return 'bg-red-50 border-red-200';
-    if (severity >= 6) return 'bg-orange-50 border-orange-200';
-    if (severity >= 4) return 'bg-yellow-50 border-yellow-200';
-    return 'bg-blue-50 border-blue-200';
-  };
+  const resultColor =
+    resultStatus === 'critical' ? '#ef4444'
+    : resultStatus === 'warning' ? '#f59e0b'
+    : '#70dcd3';
 
-  const getStatusIcon = (status) => {
-    if (status === 'passed') return <CheckCircle className="w-8 h-8 text-emerald-600" />;
-    if (status === 'warning') return <AlertCircle className="w-8 h-8 text-orange-600" />;
-    return <AlertCircle className="w-8 h-8 text-red-600" />;
-  };
+  const resultLabel =
+    resultStatus === 'critical' ? 'INFRACCIONES CRÍTICAS'
+    : resultStatus === 'warning' ? 'ADVERTENCIAS DETECTADAS'
+    : 'SIN INFRACCIONES';
 
-  const getStatusText = (status) => {
-    if (status === 'passed') return 'Sin problemas detectados';
-    if (status === 'warning') return 'Advertencias encontradas';
-    return 'Problemas críticos detectados';
-  };
+  const scoreDisplay = scanResults
+    ? Math.round(100 - (scanResults.riskLevel / 10) * 100)
+    : overallProgress;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-linear-to-br from-slate-900 to-slate-800 rounded-xl w-full max-w-3xl max-h-[90vh] overflow-hidden shadow-2xl border border-slate-700">
+    <div style={{
+      position: 'fixed', inset: 0,
+      background: 'rgba(7,7,7,0.88)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      zIndex: 100, padding: 16,
+      backdropFilter: 'blur(6px)',
+    }}>
+      <div style={{
+        background: '#0d0e12',
+        border: '1px solid #2e3038',
+        borderRadius: 16,
+        width: '100%',
+        maxWidth: 560,
+        maxHeight: '92vh',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        boxShadow: '0 32px 80px rgba(0,0,0,0.7)',
+      }}>
+
         {/* Header */}
-        <div className="bg-linear-to-r from-blue-600 to-cyan-600 px-8 py-6 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <Shield className="w-8 h-8 text-white" />
-            <div>
-              <h2 className="text-2xl font-bold text-white">Vrovex Compliance Scanner</h2>
-              <p className="text-blue-100 text-sm">Escaneo de incumplimiento de políticas TikTok Shop</p>
-            </div>
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '20px 28px',
+          borderBottom: '1px solid #2e3038',
+        }}>
+          <div>
+            <p style={{ fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#aeaeb7', marginBottom: 4, fontFamily: 'var(--font-geist)', fontWeight: 500 }}>
+              Vyshai Shield
+            </p>
+            <h2 style={{ fontFamily: 'var(--font-calsans)', fontWeight: 600, fontSize: 18, color: '#ffffff', letterSpacing: '0.04em', margin: 0 }}>
+              Compliance Scanner
+            </h2>
           </div>
           <button
             onClick={onClose}
-            className="text-white hover:bg-white/20 p-2 rounded-lg transition"
+            style={{
+              background: 'none', border: '1px solid #2e3038', color: '#aeaeb7',
+              width: 32, height: 32, borderRadius: 8, cursor: 'pointer',
+              fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'border-color 0.2s, color 0.2s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = '#70dcd3'; e.currentTarget.style.color = '#ffffff'; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = '#2e3038'; e.currentTarget.style.color = '#aeaeb7'; }}
           >
             ✕
           </button>
         </div>
 
-        {/* Content */}
-        <div className="overflow-y-auto" style={{ maxHeight: 'calc(90vh - 120px)' }}>
+        {/* Body */}
+        <div style={{ overflowY: 'auto', flex: 1, padding: '32px 28px' }}>
+
+          {/* IDLE */}
           {scanState === 'idle' && !scanResults && (
-            <div className="p-8 text-center">
-              <div className="mb-8">
-                <Shield className="w-24 h-24 text-cyan-500 mx-auto mb-4" />
-                <h3 className="text-2xl font-bold text-white mb-2">Listo para escanear</h3>
-                <p className="text-slate-300 mb-6">
-                  Analiza tu tienda para detectar potenciales infracciones de políticas de TikTok Shop
-                </p>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ width: 180, height: 180, margin: '0 auto 32px', position: 'relative' }}>
+                <RingProgress progress={0} status="ok" />
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontFamily: 'var(--font-calsans)', fontSize: 13, fontWeight: 600, color: '#aeaeb7', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Listo</span>
+                </div>
               </div>
+              <h3 style={{ fontFamily: 'var(--font-calsans)', fontSize: 22, fontWeight: 600, color: '#ffffff', letterSpacing: '0.04em', margin: '0 0 10px' }}>
+                Escaneo de cumplimiento
+              </h3>
+              <p style={{ color: '#aeaeb7', fontSize: 14, lineHeight: 1.6, margin: '0 0 32px', fontFamily: 'var(--font-geist)' }}>
+                Analiza tu tienda para detectar potenciales infracciones de políticas de TikTok Shop
+              </p>
               <button
                 onClick={startScan}
-                className="bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold py-3 px-8 rounded-lg transition transform hover:scale-105"
+                style={{
+                  fontFamily: 'var(--font-calsans)', fontWeight: 600, fontSize: 14,
+                  letterSpacing: '0.08em', textTransform: 'uppercase',
+                  background: 'transparent',
+                  border: '1px solid #70dcd3',
+                  color: '#70dcd3',
+                  padding: '14px 48px',
+                  borderRadius: 8, cursor: 'pointer',
+                  transition: 'background 0.2s, color 0.2s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = '#70dcd3'; e.currentTarget.style.color = '#070707'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#70dcd3'; }}
               >
                 Iniciar escaneo
               </button>
             </div>
           )}
 
+          {/* SCANNING */}
           {scanState === 'scanning' && (
-            <div className="p-8">
-              <div className="mb-8">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-bold text-white">Escaneando...</h3>
-                  <span className="text-cyan-400 font-mono">{scanDuration}s</span>
+            <div>
+              <div style={{ width: 200, height: 200, margin: '0 auto 32px', position: 'relative' }}>
+                <RingProgress progress={overallProgress} status="ok" />
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontFamily: 'var(--font-calsans)', fontSize: 42, fontWeight: 600, color: '#ffffff', lineHeight: 1 }}>
+                    {overallProgress}
+                  </span>
+                  <span style={{ fontFamily: 'var(--font-geist)', fontSize: 11, color: '#aeaeb7', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 4 }}>
+                    %
+                  </span>
                 </div>
               </div>
 
-              {/* Scanning Categories */}
-              <div className="space-y-4">
-                <ScanCategory label="Políticas de Prohibición" progress={scanProgress.policies} icon="⚖️" />
-                <ScanCategory label="Marcas Registradas" progress={scanProgress.trademarks} icon="™️" />
-                <ScanCategory label="Productos de Salud" progress={scanProgress.health} icon="💊" />
-                <ScanCategory label="Afirmaciones Engañosas" progress={scanProgress.claims} icon="⚠️" />
-                <ScanCategory label="Contenido Restringido" progress={scanProgress.restricted} icon="🚫" />
-              </div>
+              <p style={{ textAlign: 'center', fontFamily: 'var(--font-calsans)', fontSize: 13, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#70dcd3', marginBottom: 28 }}>
+                Analizando — {scanDuration}s
+              </p>
 
-              <div className="mt-8 flex justify-center">
-                <div className="flex gap-2">
-                  <div className="w-3 h-3 bg-cyan-500 rounded-full animate-bounce" />
-                  <div className="w-3 h-3 bg-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-                  <div className="w-3 h-3 bg-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
-                </div>
+              <div style={{ borderTop: '1px solid #2e3038' }}>
+                <CategoryRow label="Políticas de prohibición"    progress={scanProgress.policies}   done={scanProgress.policies   >= 100} />
+                <CategoryRow label="Marcas registradas"          progress={scanProgress.trademarks} done={scanProgress.trademarks >= 100} />
+                <CategoryRow label="Productos de salud"          progress={scanProgress.health}     done={scanProgress.health     >= 100} />
+                <CategoryRow label="Afirmaciones engañosas"      progress={scanProgress.claims}     done={scanProgress.claims     >= 100} />
+                <CategoryRow label="Contenido restringido"       progress={scanProgress.restricted} done={scanProgress.restricted >= 100} />
               </div>
             </div>
           )}
 
+          {/* COMPLETED */}
           {scanState === 'completed' && scanResults && (
-            <div className="p-8 space-y-6">
-              {/* Status Summary */}
-              <div className="bg-slate-800 border-2 border-slate-700 rounded-lg p-6">
-                <div className="flex items-center gap-4 mb-4">
-                  {getStatusIcon(scanResults.status)}
-                  <div>
-                    <h3 className="text-xl font-bold text-white">{getStatusText(scanResults.status)}</h3>
-                    <p className="text-slate-300">Escaneo completado en {scanDuration}s</p>
-                  </div>
+            <div>
+              <div style={{ width: 200, height: 200, margin: '0 auto 24px', position: 'relative' }}>
+                <RingProgress progress={scoreDisplay} status={resultStatus} />
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontFamily: 'var(--font-calsans)', fontSize: 46, fontWeight: 600, color: resultColor, lineHeight: 1 }}>
+                    {scoreDisplay}
+                  </span>
+                  <span style={{ fontFamily: 'var(--font-geist)', fontSize: 11, color: '#aeaeb7', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 4 }}>
+                    Score
+                  </span>
                 </div>
+              </div>
 
-                {/* Risk Level Bar */}
-                <div className="mt-4">
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm font-semibold text-slate-300">Nivel de Riesgo</span>
-                    <span className={`text-sm font-bold ${getSeverityColor(scanResults.riskLevel)}`}>
-                      {scanResults.riskLevel}/10
-                    </span>
+              <p style={{ textAlign: 'center', fontFamily: 'var(--font-calsans)', fontSize: 13, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: resultColor, marginBottom: 28 }}>
+                {resultLabel}
+              </p>
+
+              {/* Stats row */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 28 }}>
+                {[
+                  { label: 'Total', value: scanResults.summary.totalIssues, color: '#ffffff' },
+                  { label: 'Críticos', value: scanResults.summary.criticalIssues, color: '#ef4444' },
+                  { label: 'Advertencias', value: scanResults.summary.warningIssues, color: '#f59e0b' },
+                ].map(s => (
+                  <div key={s.label} style={{ background: '#141418', border: '1px solid #2e3038', borderRadius: 8, padding: '14px 16px', textAlign: 'center' }}>
+                    <p style={{ fontFamily: 'var(--font-calsans)', fontSize: 28, fontWeight: 600, color: s.color, margin: 0, lineHeight: 1 }}>{s.value}</p>
+                    <p style={{ fontFamily: 'var(--font-geist)', fontSize: 11, color: '#aeaeb7', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '6px 0 0' }}>{s.label}</p>
                   </div>
-                  <div className="w-full bg-slate-700 rounded-full h-3 overflow-hidden">
-                    <div
-                      className={`h-full transition-all duration-500 ${
-                        scanResults.riskLevel >= 9 ? 'bg-red-600' :
-                        scanResults.riskLevel >= 6 ? 'bg-orange-600' :
-                        scanResults.riskLevel >= 4 ? 'bg-yellow-600' :
-                        'bg-green-600'
-                      }`}
-                      style={{ width: `${(scanResults.riskLevel / 10) * 100}%` }}
-                    />
-                  </div>
-                </div>
+                ))}
               </div>
 
               {/* Issues */}
               {scanResults.issues.length > 0 && (
-                <div>
-                  <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                    <AlertCircle className="w-5 h-5" />
-                    Problemas Detectados ({scanResults.issues.length})
-                  </h4>
-                  <div className="space-y-3">
-                    {scanResults.issues.map((issue, idx) => (
-                      <div key={idx} className={`border rounded-lg p-4 ${getSeverityBg(issue.severity)}`}>
-                        <div className="flex justify-between items-start mb-2">
-                          <h5 className={`font-semibold ${getSeverityColor(issue.severity)}`}>
-                            {issue.message}
-                          </h5>
-                          <span className={`text-xs font-bold px-2 py-1 rounded ${getSeverityColor(issue.severity)}`}>
-                            Severidad: {issue.severity}/10
-                          </span>
+                <div style={{ marginBottom: 24 }}>
+                  <p style={{ fontFamily: 'var(--font-geist)', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#aeaeb7', marginBottom: 12, fontWeight: 500 }}>
+                    Problemas detectados
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {scanResults.issues.map((issue, i) => (
+                      <div key={i} style={{ background: '#141418', border: '1px solid #2e3038', borderRadius: 8, padding: '14px 16px', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                        <SeverityDot level={issue.severity} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontFamily: 'var(--font-geist)', fontSize: 13, color: '#ffffff', margin: '0 0 4px', fontWeight: 500 }}>{issue.message}</p>
+                          <p style={{ fontFamily: 'var(--font-geist)', fontSize: 11, color: '#aeaeb7', margin: 0, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                            {issue.type.replace(/_/g, ' ')} — Severidad {issue.severity}/10
+                          </p>
                         </div>
-                        <p className="text-sm text-slate-600">
-                          Tipo: {issue.type.replace(/_/g, ' ').toUpperCase()}
-                        </p>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Summary Stats */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
-                  <p className="text-slate-400 text-sm mb-1">Total de Problemas</p>
-                  <p className="text-3xl font-bold text-white">{scanResults.summary.totalIssues}</p>
-                </div>
-                <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
-                  <p className="text-slate-400 text-sm mb-1">Críticos</p>
-                  <p className="text-3xl font-bold text-red-600">{scanResults.summary.criticalIssues}</p>
-                </div>
-              </div>
-
               {/* Recommendations */}
-              <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
-                <h4 className="font-bold text-white mb-3 flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-green-500" />
-                  Recomendaciones
-                </h4>
-                <ul className="space-y-2">
-                  {scanResults.recommendations.map((rec, idx) => {
-                    // Remove emojis from recommendation text for professional appearance
-                    const cleanRec = rec.replace(/^[✅🚫⚠️📸📋📞❌]+\s?/, '').trim();
-                    return (
-                      <li key={idx} className="text-sm text-slate-300 flex gap-2">
-                        <span className="text-green-500 font-bold">→</span>
-                        <span>{cleanRec}</span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
+              {scanResults.recommendations.length > 0 && (
+                <div style={{ marginBottom: 28 }}>
+                  <p style={{ fontFamily: 'var(--font-geist)', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#aeaeb7', marginBottom: 12, fontWeight: 500 }}>
+                    Recomendaciones
+                  </p>
+                  <div style={{ background: '#141418', border: '1px solid #2e3038', borderRadius: 8, padding: '16px' }}>
+                    {scanResults.recommendations.map((rec, i) => {
+                      const clean = rec.replace(/^[^\w]+/, '').trim();
+                      return (
+                        <p key={i} style={{ fontFamily: 'var(--font-geist)', fontSize: 13, color: '#d9dae5', margin: i === 0 ? 0 : '10px 0 0', lineHeight: 1.55, paddingLeft: 14, borderLeft: '2px solid #2e3038' }}>
+                          {clean}
+                        </p>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               <button
                 onClick={startScan}
-                className="w-full bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold py-3 px-8 rounded-lg transition"
+                style={{
+                  width: '100%',
+                  fontFamily: 'var(--font-calsans)', fontWeight: 600, fontSize: 13,
+                  letterSpacing: '0.1em', textTransform: 'uppercase',
+                  background: 'transparent',
+                  border: '1px solid #2e3038',
+                  color: '#aeaeb7',
+                  padding: '13px',
+                  borderRadius: 8, cursor: 'pointer',
+                  transition: 'border-color 0.2s, color 0.2s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = '#70dcd3'; e.currentTarget.style.color = '#ffffff'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = '#2e3038'; e.currentTarget.style.color = '#aeaeb7'; }}
               >
                 Escanear nuevamente
               </button>
             </div>
           )}
 
+          {/* ERROR */}
           {error && (
-            <div className="p-8">
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <h4 className="font-bold text-red-900 mb-2 flex items-center gap-2">
-                  <AlertCircle className="w-5 h-5" />
-                  Error en el escaneo
-                </h4>
-                <p className="text-sm text-red-800">{error}</p>
-                <button
-                  onClick={() => {
-                    setError(null);
-                    setScanState('idle');
-                  }}
-                  className="mt-4 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded transition"
-                >
-                  Intentar nuevamente
-                </button>
-              </div>
+            <div style={{ background: '#141418', border: '1px solid #ef444440', borderRadius: 8, padding: 20, marginTop: 16 }}>
+              <p style={{ fontFamily: 'var(--font-calsans)', fontSize: 14, fontWeight: 600, color: '#ef4444', margin: '0 0 8px', letterSpacing: '0.04em' }}>
+                Error en el escaneo
+              </p>
+              <p style={{ fontFamily: 'var(--font-geist)', fontSize: 13, color: '#aeaeb7', margin: '0 0 16px' }}>{error}</p>
+              <button
+                onClick={() => { setError(null); setScanState('idle'); }}
+                style={{
+                  fontFamily: 'var(--font-calsans)', fontWeight: 600, fontSize: 12,
+                  letterSpacing: '0.08em', textTransform: 'uppercase',
+                  background: 'transparent', border: '1px solid #ef4444',
+                  color: '#ef4444', padding: '10px 24px',
+                  borderRadius: 8, cursor: 'pointer',
+                }}
+              >
+                Reintentar
+              </button>
             </div>
           )}
         </div>
-      </div>
-    </div>
-  );
-}
-
-function ScanCategory({ label, progress, icon }) {
-  return (
-    <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-white font-semibold flex items-center gap-2">
-          <span>{icon}</span>
-          {label}
-        </span>
-        <span className="text-cyan-400 font-mono text-sm">{Math.round(progress)}%</span>
-      </div>
-      <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
-        <div
-          className="h-full bg-linear-to-r from-green-500 to-emerald-500 transition-all duration-300"
-          style={{ width: `${Math.min(progress, 100)}%` }}
-        />
       </div>
     </div>
   );
