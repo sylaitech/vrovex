@@ -20,7 +20,11 @@ async function getUserShopIds(userId) {
 router.get('/', auth, async (req, res) => {
   try {
     const { status = 'active', shopId } = req.query;
-    const shopIds = shopId ? [shopId] : await getUserShopIds(req.userId);
+    const ownedIds = await getUserShopIds(req.userId);
+    // Always verify shopId ownership — never trust client input directly
+    const shopIds = shopId
+      ? (ownedIds.includes(shopId) ? [shopId] : [])
+      : ownedIds;
 
     if (!shopIds.length) {
       return res.json([]);
@@ -38,7 +42,7 @@ router.get('/', auth, async (req, res) => {
 
     res.json(alerts || []);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -57,7 +61,7 @@ router.get('/:alertId', auth, async (req, res) => {
 
     res.json(alert);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -84,7 +88,7 @@ router.patch('/:alertId/dismiss', auth, async (req, res) => {
     if (updateError) throw updateError;
     res.json(data);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -111,7 +115,7 @@ router.patch('/:alertId/resolve', auth, async (req, res) => {
     if (updateError) throw updateError;
     res.json(data);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -161,7 +165,7 @@ router.get('/stats/summary', auth, async (req, res) => {
 
     res.json(stats);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

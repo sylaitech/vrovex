@@ -1,10 +1,32 @@
 import express from 'express';
+import crypto from 'crypto';
 import { auth } from '../middleware/auth.js';
 import { requireActivePlan } from '../middleware/requireActivePlan.js';
 import { getAuthorizationUrl, getAccessToken } from '../services/tiktok.js';
 import { refreshShopMetrics } from '../services/monitoring.js';
 import { scanShopCompliance } from '../utils/complianceScanner.js';
 import { supabase } from '../server.js';
+import logger from '../utils/logger.js';
+
+// HMAC-signed OAuth state prevents CSRF on the TikTok callback
+function createOAuthState(userId) {
+  const payload = `${userId}.${Date.now()}`;
+  const sig = crypto.createHmac('sha256', process.env.JWT_SECRET).update(payload).digest('hex').slice(0, 24);
+  return `${payload}.${sig}`;
+}
+
+export function verifyOAuthState(state) {
+  const parts = state?.split('.');
+  if (!parts || parts.length !== 3) return null;
+  const [userId, ts, sig] = parts;
+  const payload = `${userId}.${ts}`;
+  const expected = crypto.createHmac('sha256', process.env.JWT_SECRET).update(payload).digest('hex').slice(0, 24);
+  // Constant-time compare to prevent timing attacks
+  if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null;
+  // Reject states older than 10 minutes
+  if (Date.now() - Number(ts) > 10 * 60 * 1000) return null;
+  return userId;
+}
 
 const router = express.Router();
 
@@ -35,18 +57,18 @@ router.get('/', auth, async (req, res) => {
 
     res.json(shops || []);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    logger.error('Shop route error:', error); res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 router.get('/connect/url', auth, requireActivePlan, async (req, res) => {
   try {
-    const state = `${req.userId}_${Date.now()}`;
+    const state = createOAuthState(req.userId);
     const authUrl = getAuthorizationUrl(state);
-
     res.json({ authUrl, state });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    logger.error('OAuth URL error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -55,10 +77,12 @@ router.post('/connect', auth, requireActivePlan, async (req, res) => {
     const { authCode, shopName, region } = req.body;
     const tokenData = await getAccessToken(authCode);
 
+    // Scope lookup to the authenticated user — prevents overwriting another user's shop tokens
     const { data: existingShop, error: shopError } = await supabase
       .from('shops')
       .select('*')
       .eq('shop_id', tokenData.shopId)
+      .eq('user_id', req.userId)
       .maybeSingle();
 
     if (shopError) {
@@ -109,7 +133,7 @@ router.post('/connect', auth, requireActivePlan, async (req, res) => {
 
     res.status(201).json(shop);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    logger.error('Shop route error:', error); res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -122,7 +146,7 @@ router.get('/:shopId', auth, async (req, res) => {
 
     res.json(shop);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    logger.error('Shop route error:', error); res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -138,7 +162,7 @@ router.post('/:shopId/refresh', auth, async (req, res) => {
     const updatedShop = await getShopById(shop.id, req.userId);
     res.json(updatedShop);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    logger.error('Shop route error:', error); res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -170,7 +194,7 @@ router.patch('/:shopId', auth, async (req, res) => {
 
     res.json(data);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    logger.error('Shop route error:', error); res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -203,7 +227,7 @@ router.delete('/:shopId', auth, async (req, res) => {
 
     res.json({ message: 'Shop deleted successfully' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    logger.error('Shop route error:', error); res.status(500).json({ error: 'Internal server error' });
   }
 });
 

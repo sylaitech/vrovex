@@ -3,6 +3,7 @@ import { getAccessToken } from '../services/tiktok.js';
 import { refreshShopMetrics } from '../services/monitoring.js';
 import { supabase } from '../server.js';
 import logger from '../utils/logger.js';
+import { verifyOAuthState } from './shops.js';
 
 const router = express.Router();
 
@@ -22,7 +23,12 @@ router.get('/callback', async (req, res) => {
       return res.redirect(`${frontend}/?tiktok=error&reason=missing_params`);
     }
 
-    const userId = String(state).split('_')[0];
+    // Verify HMAC-signed state — rejects forged or expired OAuth callbacks
+    const userId = verifyOAuthState(state);
+    if (!userId) {
+      return res.redirect(`${frontend}/?tiktok=error&reason=invalid_state`);
+    }
+
     const { data: user, error: userError } = await supabase
       .from('users')
       .select('id, role, plan_status')

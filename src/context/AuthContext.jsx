@@ -30,9 +30,9 @@ export function AuthProvider({ children }) {
   }, []);
 
   const refreshProfile = useCallback(async () => {
-    // Check for demo mode
+    // Demo mode only active when explicitly enabled at build time via env var
     const params = new URLSearchParams(window.location.search);
-    if (params.has('demo')) {
+    if (params.has('demo') && import.meta.env.VITE_DEMO_ENABLED === 'true') {
       setIsDemoMode(true);
       applyProfile({
         id: 'demo-user-123',
@@ -40,7 +40,7 @@ export function AuthProvider({ children }) {
         role: 'user',
         planStatus: 'active',
         currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        tiktokShopConnected: true
+        tiktokShopConnected: true,
       });
       setLoading(false);
       return;

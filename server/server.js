@@ -32,8 +32,21 @@ export const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// Middleware
-app.use(cors());
+// Middleware — restrict CORS to known frontend origin only
+const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5174')
+  .split(',')
+  .map((o) => o.trim());
+
+app.use(cors({
+  origin: (origin, cb) => {
+    // Allow server-to-server (no origin) and known origins
+    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+    cb(new Error('Not allowed by CORS'));
+  },
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: false,
+}));
 
 // Stripe webhooks need raw body (before JSON parser)
 app.use('/api/webhooks', webhookRoutes);
