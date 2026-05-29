@@ -54,40 +54,11 @@ export default function VrovexLanding() {
 
   const planActive = isPlanActive || previewActivePlan;
 
+  const emptyShop = { accountHealth: 0, lateDispatch: 0, onTimeDelivery: 0, vtr: 0, shieldScore: 0, status: 'pending', alerts: [] };
   const shopsData = {
-    US_Seller_Main: {
-      accountHealth: 347,
-      lateDispatch: 6.2,
-      onTimeDelivery: 87.0,
-      vtr: 96.4,
-      shieldScore: 35,
-      status: 'critical',
-      alerts: [
-        { id: 1, title: 'Late Dispatch Rate Crítico', desc: 'Estás en 6.2% — Límite TikTok 4.0%. 3 órdenes sin tracking en 48h.' },
-        { id: 2, title: 'Tendencia de caída', desc: 'Health Score cayó 53 puntos. Riesgo de suspensión en ~4 días.' },
-        { id: 3, title: 'Catálogo inconsistente', desc: 'Listing "Omega 3 Pro" requiere certificaciones en Seller Center.' },
-      ],
-    },
-    UK_Fashion_Outlet: {
-      accountHealth: 890,
-      lateDispatch: 1.1,
-      onTimeDelivery: 99.2,
-      vtr: 99.8,
-      shieldScore: 92,
-      status: 'healthy',
-      alerts: [],
-    },
-    EU_Tech_Hub: {
-      accountHealth: 720,
-      lateDispatch: 3.8,
-      onTimeDelivery: 94.5,
-      vtr: 98.1,
-      shieldScore: 72,
-      status: 'warning',
-      alerts: [
-        { id: 4, title: 'Late Dispatch al límite', desc: '3.8% (límite 4.0%). Dos retrasos más activan penalización.' },
-      ],
-    },
+    US_Seller_Main:   { ...emptyShop },
+    UK_Fashion_Outlet: { ...emptyShop },
+    EU_Tech_Hub:      { ...emptyShop },
   };
 
   const currentShopData = shopsData[selectedShop];
@@ -252,11 +223,7 @@ export default function VrovexLanding() {
     { q: '¿Varias tiendas?', a: 'Plan Pro: hasta 3 tiendas con alertas independientes.' },
   ];
 
-  const statusBadge = () => {
-    if (currentShopData.status === 'critical') return 'badge-status badge-critical';
-    if (currentShopData.status === 'warning') return 'badge-status badge-warning';
-    return 'badge-status';
-  };
+  const statusBadge = () => 'badge-status';
 
   if (view === 'dashboard') {
     return (
@@ -325,7 +292,7 @@ export default function VrovexLanding() {
             </div>
             <div className="flex flex-col items-stretch sm:items-end gap-3">
               <span className={statusBadge()}>
-                {currentShopData.status === 'critical' ? 'Riesgo' : currentShopData.status === 'warning' ? 'Anomalías' : 'Activo'}
+                Sin datos
               </span>
               <ConnectTikTokButton />
             </div>
@@ -335,10 +302,10 @@ export default function VrovexLanding() {
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
-                  { label: 'Health Score', value: currentShopData.accountHealth, suffix: '/1000', danger: currentShopData.accountHealth < 400, meta: 'Umbral 200', st: currentShopData.accountHealth < 400 ? 'Crítico' : 'OK' },
-                  { label: 'Late Dispatch', value: `${currentShopData.lateDispatch}%`, danger: currentShopData.lateDispatch > 4, meta: 'Max 4%', st: currentShopData.lateDispatch > 4 ? 'Alto' : 'OK' },
-                  { label: 'On-Time', value: `${currentShopData.onTimeDelivery}%`, danger: false, meta: 'Meta 95%', st: 'Activo' },
-                  { label: 'VTR', value: `${currentShopData.vtr}%`, danger: false, meta: 'Min 95%', st: 'OK' },
+                  { label: 'Health Score', value: currentShopData.accountHealth || '—', suffix: currentShopData.accountHealth ? '/1000' : '', danger: false, meta: 'Umbral 200', st: currentShopData.accountHealth ? 'OK' : 'Sin datos' },
+                  { label: 'Late Dispatch', value: currentShopData.lateDispatch ? `${currentShopData.lateDispatch}%` : '—', danger: false, meta: 'Max 4%', st: currentShopData.lateDispatch ? 'OK' : 'Sin datos' },
+                  { label: 'On-Time', value: currentShopData.onTimeDelivery ? `${currentShopData.onTimeDelivery}%` : '—', danger: false, meta: 'Meta 95%', st: currentShopData.onTimeDelivery ? 'OK' : 'Sin datos' },
+                  { label: 'VTR', value: currentShopData.vtr ? `${currentShopData.vtr}%` : '—', danger: false, meta: 'Min 95%', st: currentShopData.vtr ? 'OK' : 'Sin datos' },
                 ].map((m) => (
                   <div key={m.label} className="card-elevated">
                     <p className="text-label">{m.label}</p>
@@ -361,7 +328,7 @@ export default function VrovexLanding() {
                   </div>
                   {activeAlerts.length === 0 ? (
                     <div className="py-12 text-center text-muted">
-                      <p>Sin alertas críticas</p>
+                      <p>Conecta tu tienda para ver alertas</p>
                     </div>
                   ) : (
                     activeAlerts.map((alert) => (
@@ -388,12 +355,12 @@ export default function VrovexLanding() {
                         <circle cx="50" cy="50" r="42" fill="none" stroke="var(--color-electric-blue)" strokeWidth="6" strokeDasharray="264" strokeDashoffset={264 - (264 * currentShopData.shieldScore) / 100} strokeLinecap="round" />
                       </svg>
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-3xl font-semibold">{currentShopData.shieldScore}</span>
-                        <span className="text-xs text-muted">/100</span>
+                        <span className="text-3xl font-semibold">{currentShopData.shieldScore || '—'}</span>
+                        {currentShopData.shieldScore > 0 && <span className="text-xs text-muted">/100</span>}
                       </div>
                     </div>
                     <p className="text-label mt-4">
-                      {currentShopData.shieldScore > 75 ? 'Robusta' : currentShopData.shieldScore > 50 ? 'Media' : 'Vulnerable'}
+                      {currentShopData.shieldScore > 75 ? 'Robusta' : currentShopData.shieldScore > 50 ? 'Media' : currentShopData.shieldScore > 0 ? 'Baja' : 'Sin datos'}
                     </p>
                   </div>
                 </div>
