@@ -294,6 +294,12 @@ body {
 .reveal-delay-5 { animation-delay: 0.72s; }
 .reveal-delay-6 { animation-delay: 0.86s; }
 
+/* Pause all CSS animations when tab is hidden — saves GPU when user switches tabs */
+.page-hidden .ambient-layer,
+.page-hidden .flow-ribbons {
+  animation-play-state: paused !important;
+}
+
 /* Mobile: strip heavy GPU layers and blur animations */
 @media (max-width: 768px) {
   .ambient-mesh-shift,
@@ -350,8 +356,8 @@ body {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(7, 7, 7, 0.75);
-  backdrop-filter: blur(14px);
+  background: rgba(7, 7, 7, 0.82);
+  backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--color-graphite);
 }
 

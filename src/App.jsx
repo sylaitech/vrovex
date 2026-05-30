@@ -16,9 +16,6 @@ function AmbientBackground() {
       <div className="ambient-bg" aria-hidden="true">
         <div className="ambient-layer ambient-drift-sage" />
         <div className="ambient-layer ambient-drift-teal" />
-        <div className="ambient-layer ambient-mesh-shift" />
-        <div className="ambient-layer ambient-edge-pulse" />
-        <div className="ambient-layer ambient-grain" />
       </div>
       <FlowingRibbons />
     </>
@@ -31,6 +28,7 @@ export default function VrovexLanding() {
     isPlanActive,
     isAuthenticated,
     isStaff,
+    tiktokShopConnected,
     startCheckout,
     logout,
     user,
@@ -414,25 +412,31 @@ export default function VrovexLanding() {
 
           {activeTab === 'compliance' && (
             <div className="space-y-4">
-              {/* Shop-Wide Compliance Scanner */}
-              <div className="card-elevated p-6 bg-gradient-to-br from-blue-900/20 to-cyan-900/20 border border-blue-700/30">
+              {/* Shop-Wide Compliance Scanner — solo disponible con TikTok conectado */}
+              <div className="card-elevated p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <h2 className="font-heading-sm text-blue-300 flex items-center gap-2">
-                      🔍 Escáner de Incumplimiento
-                    </h2>
-                    <p className="text-sm text-blue-200 mt-2">Analiza tu tienda completa para detectar infracciones de políticas de TikTok Shop</p>
+                    <h2 className="font-heading-sm">Escáner de cumplimiento</h2>
+                    <p className="text-muted text-sm mt-2">
+                      {tiktokShopConnected
+                        ? 'Analiza tus productos reales para detectar infracciones de políticas de TikTok Shop.'
+                        : 'Conecta tu tienda TikTok Shop para escanear tus productos reales.'}
+                    </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedShopForScan(selectedShop);
-                      setShowComplianceScanner(true);
-                    }}
-                    className="btn-pill-primary whitespace-nowrap bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 px-6"
-                  >
-                    Buscar Infracciones
-                  </button>
+                  {tiktokShopConnected ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedShopForScan(selectedShop);
+                        setShowComplianceScanner(true);
+                      }}
+                      className="btn-pill-primary whitespace-nowrap px-6"
+                    >
+                      Escanear productos
+                    </button>
+                  ) : (
+                    <ConnectTikTokButton />
+                  )}
                 </div>
               </div>
 
