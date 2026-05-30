@@ -691,8 +691,8 @@ export default function VrovexLanding() {
       <footer className="section-sm border-t border-graphite relative z-10">
         <div className="harness-container flex flex-col md:flex-row items-center justify-center gap-4 text-sm text-muted">
           <div className="flex gap-6">
-            <a href="#" className="nav-ghost text-sm">Términos</a>
-            <a href="#" className="nav-ghost text-sm">Privacidad</a>
+            <a href="/terms.html" className="nav-ghost text-sm" target="_blank" rel="noopener noreferrer">Términos</a>
+            <a href="/privacy.html" className="nav-ghost text-sm" target="_blank" rel="noopener noreferrer">Privacidad</a>
           </div>
         </div>
       </footer>

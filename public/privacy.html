@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — Vyshai Shield</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; background: #070707; color: #aeaeb7; font-size: 15px; line-height: 1.75; -webkit-font-smoothing: antialiased; }
+    .wrap { max-width: 740px; margin: 0 auto; padding: 56px 24px 100px; }
+    .logo { font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 17px; color: #fff; text-decoration: none; display: inline-block; margin-bottom: 52px; letter-spacing: 0.02em; }
+    h1 { font-family: 'Montserrat', sans-serif; font-size: 26px; font-weight: 600; color: #fff; margin-bottom: 6px; }
+    .meta { font-size: 12px; color: #6b6b75; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 44px; }
+    h2 { font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 600; color: #fff; text-transform: uppercase; letter-spacing: 0.1em; margin: 40px 0 14px; }
+    p { margin-bottom: 14px; }
+    ul { padding-left: 18px; margin-bottom: 14px; }
+    li { margin-bottom: 7px; }
+    a { color: #70dcd3; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    hr { border: none; border-top: 1px solid #1e2028; margin: 44px 0; }
+    .nav { margin-top: 64px; font-size: 13px; display: flex; gap: 24px; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <a href="/" class="logo">Vyshai Shield</a>
+
+  <h1>Privacy Policy</h1>
+  <p class="meta">Effective date: May 30, 2026</p>
+
+  <p>Vyshai Shield ("we", "our", "the Service") provides TikTok Shop compliance monitoring, policy alert, and appeal generation tools at vrovex.com. This Privacy Policy explains what data we collect, why we collect it, and how we protect it.</p>
+
+  <hr />
+
+  <h2>1. Data We Collect</h2>
+  <ul>
+    <li><strong>Account data:</strong> name, email address, and password (stored as a bcrypt hash — we never store your plain-text password).</li>
+    <li><strong>TikTok Shop data:</strong> OAuth access token, shop metrics (health score, dispatch rate, delivery rate), product listings, and order data — fetched via the TikTok Shop Open Platform API with your explicit authorization. We do not store TikTok login credentials.</li>
+    <li><strong>Usage data:</strong> compliance scan results, generated appeals, and alerts associated with your account.</li>
+    <li><strong>Payment data:</strong> payments are processed entirely by Lemon Squeezy. We do not store card numbers or sensitive financial information.</li>
+  </ul>
+
+  <h2>2. How We Use Your Data</h2>
+  <ul>
+    <li>To deliver the core service: account health monitoring, compliance alerts, and AI-assisted appeal generation.</li>
+    <li>To send transactional emails: alerts, payment confirmations, and password resets.</li>
+    <li>To improve compliance detection accuracy.</li>
+    <li>To comply with applicable legal obligations.</li>
+  </ul>
+  <p>We do not sell, rent, or share personal data with third parties for advertising or marketing purposes.</p>
+
+  <h2>3. TikTok Shop Data</h2>
+  <p>Access to your TikTok Shop data is granted only through TikTok's OAuth flow and only with your explicit consent. We use this data exclusively to display your metrics, generate alerts, and scan your product listings for policy compliance — all on your behalf.</p>
+  <p>You can revoke access at any time by disconnecting your shop from the dashboard or by revoking permissions directly in your TikTok Shop account settings. Upon revocation, we stop fetching new data immediately.</p>
+
+  <h2>4. Third-Party Services</h2>
+  <ul>
+    <li><strong>Supabase</strong> — database and authentication infrastructure.</li>
+    <li><strong>Vercel</strong> — hosting and edge delivery.</li>
+    <li><strong>OpenAI</strong> — AI appeal generation. Data sent to OpenAI is not used to train models per OpenAI's API data usage policy.</li>
+    <li><strong>Lemon Squeezy</strong> — payment processing.</li>
+    <li><strong>TikTok Shop Open Platform</strong> — merchant data access via OAuth.</li>
+  </ul>
+
+  <h2>5. Data Retention</h2>
+  <p>Account data is retained while your account is active. If you delete your account, personal data is permanently removed from our systems within 30 days, except where retention is required by law. TikTok OAuth tokens expire on TikTok's schedule and are not stored beyond their validity period.</p>
+
+  <h2>6. Security</h2>
+  <p>We apply industry-standard security measures: all data is transmitted over HTTPS/TLS, passwords are hashed with bcrypt (cost factor 12), session tokens are short-lived (1-hour JWT), and access is role-controlled. No system is 100% secure — in the event of a breach affecting your data, we will notify you promptly.</p>
+
+  <h2>7. Your Rights</h2>
+  <p>You have the right to access, correct, export, or delete the personal data we hold about you. To exercise any of these rights, contact us at <a href="mailto:sylai.tech@gmail.com">sylai.tech@gmail.com</a>. We will respond within 30 days.</p>
+
+  <h2>8. Children</h2>
+  <p>The Service is not directed to individuals under 18 years of age. We do not knowingly collect data from minors.</p>
+
+  <h2>9. Changes to This Policy</h2>
+  <p>We may update this policy. If changes are material, we will notify registered users by email at least 14 days before the changes take effect. Continued use of the Service after that date constitutes acceptance.</p>
+
+  <h2>10. Contact</h2>
+  <p>Privacy questions or data requests:<br><a href="mailto:sylai.tech@gmail.com">sylai.tech@gmail.com</a></p>
+
+  <div class="nav">
+    <a href="/">← Back to Vyshai Shield</a>
+    <a href="/terms.html">Terms of Service</a>
+  </div>
+</div>
+</body>
+</html>
