@@ -28,6 +28,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust Vercel/proxy X-Forwarded-For so rate limiting uses real client IP
+app.set('trust proxy', 1);
+
 // Initialize Supabase
 export const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -48,22 +51,24 @@ app.use(helmet({
   hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
 }));
 
-// Rate limiters
+// Rate limiters — keyed by real client IP (requires trust proxy above)
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,   // 15 minutes
-  max: 10,                     // 10 attempts per window
+  windowMs: 15 * 60 * 1000,
+  max: 20,                     // 20 attempts per IP per 15 min (generous for real users)
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many attempts. Try again in 15 minutes.' },
-  skipSuccessfulRequests: false,
+  skipSuccessfulRequests: true, // Only count failed attempts
+  keyGenerator: (req) => req.ip || req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown',
 });
 
 const generalLimiter = rateLimit({
-  windowMs: 60 * 1000,        // 1 minute
-  max: 120,                   // 120 requests/min per IP
+  windowMs: 60 * 1000,
+  max: 200,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests.' },
+  keyGenerator: (req) => req.ip || req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown',
 });
 
 // Middleware — restrict CORS to known frontend origin only
