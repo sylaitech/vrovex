@@ -24,7 +24,7 @@ if (!email || !password) {
 const farFuture = new Date();
 farFuture.setFullYear(farFuture.getFullYear() + 10);
 
-const passwordHash = await bcrypt.hash(password, 10);
+const passwordHash = await bcrypt.hash(password, 12);
 
 // Check if user exists
 const { data: existing } = await supabase

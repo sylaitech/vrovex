@@ -27,7 +27,7 @@ router.get('/stats', async (req, res) => {
       generatedAt: new Date().toISOString(),
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -73,7 +73,7 @@ router.get('/users', async (req, res) => {
       })),
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -149,7 +149,7 @@ router.patch('/users/:userId', async (req, res) => {
       tiktokShopConnected: updatedUser.tiktok_shop_connected,
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

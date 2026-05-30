@@ -21,10 +21,9 @@ router.get('/status', auth, async (req, res) => {
       planStatus: user.plan_status,
       currentPeriodEnd: user.current_period_end,
       tiktokShopConnected: user.tiktok_shop_connected,
-      stripeConfigured: stripeEnabled(),
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -50,7 +49,7 @@ router.post('/checkout', auth, async (req, res) => {
     const session = await createCheckoutSession(req.userId, user.email);
     res.json({ url: session.url, sessionId: session.id });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

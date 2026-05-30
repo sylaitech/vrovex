@@ -48,11 +48,10 @@ export default function VrovexLanding() {
   const [complianceText, setComplianceText] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [complianceStatus, setComplianceStatus] = useState(null);
-  const [previewActivePlan, setPreviewActivePlan] = useState(false);
   const [showComplianceScanner, setShowComplianceScanner] = useState(false);
   const [selectedShopForScan, setSelectedShopForScan] = useState(null);
 
-  const planActive = isPlanActive || previewActivePlan;
+  const planActive = isPlanActive;
 
   const emptyShop = { accountHealth: 0, lateDispatch: 0, onTimeDelivery: 0, vtr: 0, shieldScore: 0, status: 'pending', alerts: [] };
   const shopsData = {
@@ -150,7 +149,6 @@ export default function VrovexLanding() {
 
     if (billing === 'success') {
       setBillingToast(t('billing.success'));
-      setPreviewActivePlan(true);
     }
     if (billing === 'canceled') setBillingToast(t('billing.canceled'));
     if (tiktok === 'connected') setBillingToast(t('tiktok.connected'));

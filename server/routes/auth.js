@@ -64,6 +64,10 @@ router.post('/register', async (req, res) => {
     if (!email || !password || !name) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
+    // bcrypt truncates at 72 bytes — passwords longer than that hash identically (security + DoS risk)
+    if (password.length > 72)   return res.status(400).json({ error: 'Password too long (max 72 characters)' });
+    if (email.length    > 254)  return res.status(400).json({ error: 'Email too long' });
+    if (name.length     > 128)  return res.status(400).json({ error: 'Name too long (max 128 characters)' });
 
     const { data: existingUser } = await supabase
       .from('users').select('id').eq('email', email.toLowerCase()).single();
@@ -105,6 +109,7 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+    if (password.length > 72 || email.length > 254) return res.status(400).json({ error: 'Invalid credentials' });
 
     const { data: user, error: userError } = await supabase
       .from('users')

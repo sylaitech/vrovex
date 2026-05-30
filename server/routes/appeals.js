@@ -109,10 +109,14 @@ router.patch('/:appealId', async (req, res) => {
     if (!appeal) return res.status(404).json({ error: 'Appeal not found' });
 
     const { generatedContent, notes, status } = req.body;
+    const ALLOWED_STATUSES = ['draft', 'submitted', 'resolved', 'dismissed'];
     const updates = {};
     if (generatedContent) updates.reason = generatedContent;
     if (notes) updates.evidence = notes;
-    if (status) updates.status = status;
+    if (status !== undefined) {
+      if (!ALLOWED_STATUSES.includes(status)) return res.status(400).json({ error: 'Invalid status value' });
+      updates.status = status;
+    }
     if (Object.keys(updates).length === 0) return res.status(400).json({ error: 'No fields to update' });
 
     const { data, error } = await supabase
