@@ -71,15 +71,18 @@ const generalLimiter = rateLimit({
   keyGenerator: (req) => req.ip || req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown',
 });
 
-// Middleware — restrict CORS to known frontend origin only
-const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5174')
-  .split(',')
-  .map((o) => o.trim());
+// Middleware — restrict CORS to known frontend origins (with and without www)
+const baseOrigins = (process.env.FRONTEND_URL || 'http://localhost:5174')
+  .split(',').map((o) => o.trim());
+const allowedOrigins = new Set([
+  ...baseOrigins,
+  ...baseOrigins.map((o) => o.replace('://', '://www.')),
+  ...baseOrigins.map((o) => o.replace('://www.', '://')),
+]);
 
 app.use(cors({
   origin: (origin, cb) => {
-    // Allow server-to-server (no origin) and known origins
-    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+    if (!origin || allowedOrigins.has(origin)) return cb(null, true);
     cb(new Error('Not allowed by CORS'));
   },
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
